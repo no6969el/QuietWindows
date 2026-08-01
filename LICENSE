@@ -19,3 +19,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+ADDITIONAL NOTICE: The PowerShell scripts in this repository modify Windows
+system settings (power plans, registry interrupt-affinity keys, scheduled
+tasks, Windows Defender exclusions, and services). They are provided for
+reference and convenience. Review each script before running it, run at your
+own risk, and use the included Undo scripts to revert changes. The authors
+are not responsible for any issues arising from their use.
