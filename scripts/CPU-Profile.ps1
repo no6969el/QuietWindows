@@ -36,7 +36,7 @@
 # older/absent version are discarded and re-detected rather than trusted.
 $script:CpuSchemaVersion = 3
 
-$script:CpuConfigDir  = Join-Path $env:APPDATA 'QuietWindows'
+$script:CpuConfigDir  = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'QuietWindows'
 $script:CpuConfigFile = Join-Path $script:CpuConfigDir 'config.json'
 
 # ================================================================

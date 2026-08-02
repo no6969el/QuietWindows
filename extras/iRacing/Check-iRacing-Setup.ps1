@@ -82,10 +82,10 @@ if ($needPin) {
     if (Get-Process ProcessGovernor -ErrorAction SilentlyContinue) { OK "Process Lasso is running" }
     else { WARN "Process Lasso is not running - its rules will not apply"; $issues++ }
 
-    $ini = 'C:\ProgramData\ProcessLasso\config\prolasso.ini'
+    $ini = (Join-Path ([Environment]::GetFolderPath('CommonApplicationData')) 'ProcessLasso\config\prolasso.ini')
     if (Test-Path -LiteralPath $ini) {
         try {
-            $t = [System.IO.File]::ReadAllText($ini, [System.Text.Encoding]::Unicode).ToLower()
+            $t = [System.IO.File]::ReadAllText($ini, [System.Text.Encoding]::Unicode).ToLowerInvariant()
 
             if ($t.Contains("iracingsim64dx11.exe,($range)")) { OK "CPU Set $range is set for the sim" }
             else { WARN "no CPU Set of $range for iRacingSim64DX11.exe - add one (CPU Sets, not Affinity)"; $issues++ }
@@ -105,7 +105,7 @@ if ($needPin) {
             $m = [regex]::Match($t, 'iracingsim64dx11\.exe,0,([0-9]+-[0-9]+)')
             if (-not $m.Success) {
                 OK "no hard-affinity rule (the CPU Set is doing the work on its own)"
-            } elseif ($m.Groups[1].Value -eq $range.ToLower()) {
+            } elseif ($m.Groups[1].Value -eq $range.ToLowerInvariant()) {
                 INFO "there is also a hard-affinity rule for $range (prolasso.ini, DefaultAffinitiesEx)"
                 INFO "  it agrees with the CPU Set, so it is redundant rather than harmful - anti-cheat may ignore it, and the CPU Set still applies"
             } else {

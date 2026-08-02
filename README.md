@@ -10,7 +10,7 @@ A Windows PC doesn't work like that. While you're playing, Windows is also
 checking for updates, indexing your files, scanning for viruses, updating
 apps you forgot you installed, and letting a dozen background programs wake
 up whenever they feel like it. Each of those is a tiny interruption. Most of
-them you'd never notice. But one landing at the wrong moment is a stutter,
+them you'd never notice. But one landing at the wrong moment is a stutter —
 that half-second hitch where the picture freezes and you miss the shot, the
 corner, the jump.
 

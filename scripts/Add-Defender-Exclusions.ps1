@@ -57,7 +57,7 @@ foreach ($sub in 'My Games', 'Saved Games') {
     $c = Join-Path $docs $sub
     if (Test-Path -LiteralPath $c) { $paths.Add($c) }
 }
-$sg = Join-Path $env:USERPROFILE 'Saved Games'
+$sg = Join-Path ([Environment]::GetFolderPath('UserProfile')) 'Saved Games'
 if (Test-Path -LiteralPath $sg) { $paths.Add($sg) }
 
 $paths = @($paths | Sort-Object -Unique)

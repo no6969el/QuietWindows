@@ -36,7 +36,7 @@
 #>
 
 $script:GameSchemaVersion = 1
-$script:GameConfigDir     = Join-Path $env:APPDATA 'QuietWindows'
+$script:GameConfigDir     = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'QuietWindows'
 $script:GameConfigFile    = Join-Path $script:GameConfigDir 'games.json'
 $script:GameListCache     = $null
 
@@ -130,8 +130,8 @@ function Get-GameLibraryRoots {
     }
 
     # ---- Epic ----------------------------------------------------
-    Add-Root 'C:\Program Files\Epic Games'
-    Add-Root 'C:\Program Files (x86)\Epic Games'
+    Add-Root (Join-Path ([Environment]::GetFolderPath('ProgramFiles')) 'Epic Games')
+    Add-Root (Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Epic Games')
 
     # ---- Xbox / Microsoft Store ----------------------------------
     foreach ($d in (Get-PSDrive -PSProvider FileSystem -ErrorAction SilentlyContinue)) {
@@ -139,27 +139,27 @@ function Get-GameLibraryRoots {
     }
 
     # ---- GOG -----------------------------------------------------
-    Add-Root 'C:\Program Files (x86)\GOG Galaxy\Games'
-    Add-Root 'C:\GOG Games'
+    Add-Root (Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'GOG Galaxy\Games')
+    Add-Root "$env:SystemDrive\GOG Games"
 
     # ---- EA / Origin ---------------------------------------------
-    Add-Root 'C:\Program Files\EA Games'
-    Add-Root 'C:\Program Files (x86)\EA Games'
-    Add-Root 'C:\Program Files (x86)\Origin Games'
+    Add-Root (Join-Path ([Environment]::GetFolderPath('ProgramFiles')) 'EA Games')
+    Add-Root (Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'EA Games')
+    Add-Root (Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Origin Games')
 
     # ---- Ubisoft -------------------------------------------------
     try {
         $u = (Get-ItemProperty 'HKLM:\SOFTWARE\WOW6432Node\Ubisoft\Launcher' -ErrorAction Stop).InstallDir
         if ($u) { Add-Root (Join-Path $u 'games') }
     } catch { }
-    Add-Root 'C:\Program Files (x86)\Ubisoft\Ubisoft Game Launcher\games'
+    Add-Root (Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Ubisoft\Ubisoft Game Launcher\games')
 
     # ---- Battle.net ----------------------------------------------
-    Add-Root 'C:\Program Files (x86)\Battle.net'
-    Add-Root 'C:\Program Files (x86)\Blizzard'
+    Add-Root (Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Battle.net')
+    Add-Root (Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Blizzard')
 
     # ---- Riot ----------------------------------------------------
-    Add-Root 'C:\Riot Games'
+    Add-Root "$env:SystemDrive\Riot Games"
 
     return $roots.ToArray()
 }
@@ -350,7 +350,7 @@ function Find-InstalledGames {
     }
 
     # ---- Epic keeps a manifest per game; it names the program for us
-    $epicManifests = 'C:\ProgramData\Epic\EpicGamesLauncher\Data\Manifests'
+    $epicManifests = (Join-Path ([Environment]::GetFolderPath('CommonApplicationData')) 'Epic\EpicGamesLauncher\Data\Manifests')
     if (Test-Path -LiteralPath $epicManifests) {
         foreach ($m in (Get-ChildItem -LiteralPath $epicManifests -Filter *.item -ErrorAction SilentlyContinue)) {
             try {
@@ -372,7 +372,7 @@ function Find-InstalledGames {
     $seen  = @{}
     $final = @()
     foreach ($g in $games) {
-        $key = ($g.Folders[0]).ToLower()
+        $key = ($g.Folders[0]).ToLowerInvariant()
         if ($seen.ContainsKey($key)) { continue }
         $seen[$key] = $true
         $final += $g

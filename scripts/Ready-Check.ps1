@@ -84,11 +84,11 @@ if ($P.Form -eq 'mobile') {
     Show-OK "active plan = $planName (single-CCD - power plan isn't critical; Balanced is fine)"
 } elseif (-not $P.HasBigCache) {
     Show-INFO "active plan = $planName - make sure core parking is OFF (100% cores unparked)"
-} elseif ($scheme.ToLower().Contains('a4342cf1') -or $planName -like '*Bitsum*') {
+} elseif ($scheme.ToLowerInvariant().Contains('a4342cf1') -or $planName -like '*Bitsum*') {
     Show-OK "active plan = $planName (all cores unparked)"
-} elseif ($scheme.ToLower().Contains('8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c')) {
+} elseif ($scheme.ToLowerInvariant().Contains('8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c')) {
     Show-OK "active plan = $planName (High Performance - cores unparked)"
-} elseif ($scheme.ToLower().Contains('381b4222-f694-41f0-9685-ff5bb260df2e')) {
+} elseif ($scheme.ToLowerInvariant().Contains('381b4222-f694-41f0-9685-ff5bb260df2e')) {
     Show-WARN "active plan = Balanced - on a dual-CCD chip its core parking can starve the VR compositor. Switch to Bitsum Highest Performance or High Performance."
     $issues++
 } else {
@@ -170,14 +170,14 @@ if (-not $P.HasBigCache) {
         Show-WARN "ProcessGovernor.exe not running - Process Lasso rules won't apply"
         $issues++
     }
-    $cfg = 'C:\ProgramData\ProcessLasso\config\prolasso.ini'
+    $cfg = (Join-Path ([Environment]::GetFolderPath('CommonApplicationData')) 'ProcessLasso\config\prolasso.ini')
     if (Test-Path $cfg) {
         try {
             # Which programs to look for comes from your games list, so this
             # works whatever you play. One correct CPU Set rule is enough to
             # pass - you are not expected to have set one up for every game
             # you own.
-            $t = [System.IO.File]::ReadAllText($cfg, [System.Text.Encoding]::Unicode).ToLower()
+            $t = [System.IO.File]::ReadAllText($cfg, [System.Text.Encoding]::Unicode).ToLowerInvariant()
             $names = @()
             try { $names = @(Get-GameExeNames -Quiet) } catch { }
 
@@ -187,8 +187,8 @@ if (-not $P.HasBigCache) {
                 $setFor    = @()
                 $conflicts = @()
                 foreach ($n in $names) {
-                    $exe = [regex]::Escape("$($n.ToLower()).exe")
-                    if ($t.Contains("$($n.ToLower()).exe,($VCacheRange)")) { $setFor += $n }
+                    $exe = [regex]::Escape("$($n.ToLowerInvariant()).exe")
+                    if ($t.Contains("$($n.ToLowerInvariant()).exe,($VCacheRange)")) { $setFor += $n }
 
                     # A hard-affinity rule only matters when it DISAGREES with
                     # that game's CPU Set. Plenty of people set affinities on
@@ -196,7 +196,7 @@ if (-not $P.HasBigCache) {
                     # just noise. A rule that points somewhere else, though,
                     # fights the CPU Set and the winner is unpredictable.
                     $m = [regex]::Match($t, "$exe,0,([0-9]+-[0-9]+)")
-                    if ($m.Success -and $t.Contains("$($n.ToLower()).exe,($VCacheRange)") -and $m.Groups[1].Value -ne $VCacheRange.ToLower()) {
+                    if ($m.Success -and $t.Contains("$($n.ToLowerInvariant()).exe,($VCacheRange)") -and $m.Groups[1].Value -ne $VCacheRange.ToLowerInvariant()) {
                         $conflicts += ("{0} (affinity {1} vs CPU Set {2})" -f $n, $m.Groups[1].Value, $VCacheRange)
                     }
                 }
