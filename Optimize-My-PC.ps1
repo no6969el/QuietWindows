@@ -17,6 +17,9 @@
     that part rather than guessing.
 #>
 
+# Cosmetic only: keeps probe noise out of a window aimed at non-readers.
+# Anything that must be heard uses -ErrorAction Stop explicitly, which
+# overrides this per call. Do not rely on this line to hide real failures.
 $ErrorActionPreference = 'SilentlyContinue'
 $Root       = $PSScriptRoot
 $ScriptsDir = Join-Path $Root 'scripts'
@@ -141,26 +144,38 @@ foreach ($f in $fixes) {
     if (Test-Path $p) { $items += [pscustomobject]@{ Title=$f.title; Path=$p } }
     else { Write-C ("  ! missing: {0} (skipped)" -f $f.script) $Warn }
 }
-$sb = ("`$env:QW_FREQ_FIRST_CORE='{0}'; `$env:QW_SIMULATED='{1}'; `$Host.UI.RawUI.WindowTitle='QuietWindows - applying baseline';" -f $P.FreqFirst, $(if ($P.Simulated) { '1' } else { '0' }))
+$sb = ("`$qwFail=0; `$env:QW_FREQ_FIRST_CORE='{0}'; `$env:QW_SIMULATED='{1}'; `$Host.UI.RawUI.WindowTitle='QuietWindows - applying baseline';" -f $P.FreqFirst, $(if ($P.Simulated) { '1' } else { '0' }))
 if ($P.Simulated) { $sb += (" `$env:QW_FORCE_PROFILE='{0}';" -f $env:QW_FORCE_PROFILE) }
 $n = 0
 foreach ($it in $items) {
     $n++
     $ttl = $it.Title -replace "'","''"    # NB: not $t - would clobber the $T color var (PS vars are case-insensitive)
     $pth = $it.Path  -replace "'","''"
-    $sb += (" Write-Host ''; Write-Host ('=' * 60) -ForegroundColor DarkCyan; Write-Host '[{0}/{1}]  {2}' -ForegroundColor Cyan; & '{3}';" -f $n,$items.Count,$ttl,$pth)
+    $sb += (" Write-Host ''; Write-Host ('=' * 60) -ForegroundColor DarkCyan; Write-Host '[{0}/{1}]  {2}' -ForegroundColor Cyan; try {{ & '{3}'; if (-not `$?) {{ `$qwFail++ }} }} catch {{ `$qwFail++; Write-Host ('   FAILED: ' + `$_.Exception.Message) -ForegroundColor Red }};" -f $n,$items.Count,$ttl,$pth)
 }
-$sb += " Write-Host ''; Write-Host 'ALL DONE - this window closes in 5 seconds...' -ForegroundColor Green; Start-Sleep 5"
-$ok = $true
+$sb += " Write-Host '';"
+$sb += " if (`$qwFail -gt 0) { Write-Host ('{0} of $($items.Count) step(s) reported a problem - scroll up for the red lines.' -f `$qwFail) -ForegroundColor Yellow }"
+$sb += " else { Write-Host 'ALL DONE - this window closes in 5 seconds...' -ForegroundColor Green };"
+$sb += " Start-Sleep 5; exit `$qwFail"
+$ok  = $true
+$why = "  You said No to the Windows prompt - nothing was changed."
 try {
     $enc = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($sb))
-    Start-Process powershell.exe -Verb RunAs -Wait -ArgumentList "-NoProfile -ExecutionPolicy Bypass -EncodedCommand $enc"
+    # -ErrorAction Stop is load-bearing. Declining UAC raises a NON-terminating
+    # error, which try/catch ignores by default - so this block used to report
+    # success after the user pressed No.
+    $proc = Start-Process powershell.exe -Verb RunAs -Wait -PassThru -ErrorAction Stop `
+                          -ArgumentList "-NoProfile -ExecutionPolicy Bypass -EncodedCommand $enc"
+    if ($proc -and $proc.ExitCode -gt 0) {
+        $ok  = $false
+        $why = "  {0} step(s) did not finish. Nothing is broken - re-run this, or" -f $proc.ExitCode
+    }
 } catch { $ok = $false }
 
 Clear-Host; Bar
 if (-not $ok) {
-    Write-C "  You said No to the Windows prompt - nothing was changed." $Warn
-    Write-C "  Run this again any time." $Dim
+    Write-C $why $Warn
+    Write-C "  use QuietWindows.bat to run the steps one at a time." $Dim
     Bar; [void](Read-Host "  Press Enter to close"); return
 }
 Write-C "  ALL DONE." $Go
