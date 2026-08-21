@@ -517,8 +517,21 @@ if ($failedTasks.Count -gt 0 -and -not $NoSystem) {
 
     $taskName = 'QuietWindows-SystemHop'
     $cmd = ('powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{0}"' -f $helper)
+    # Check the exit codes rather than waiting out the full 30s poll below
+    # when the task engine refused the job outright.
+    $schedOk = $true
     & schtasks.exe /Create /TN $taskName /TR $cmd /SC ONCE /ST 00:00 /RU SYSTEM /RL HIGHEST /F 2>&1 | Out-Null
-    & schtasks.exe /Run /TN $taskName 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        $schedOk = $false
+        Write-Log ("could not create the SYSTEM helper task (schtasks exit {0})" -f $LASTEXITCODE) 'Yellow'
+    }
+    if ($schedOk) {
+        & schtasks.exe /Run /TN $taskName 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            $schedOk = $false
+            Write-Log ("could not start the SYSTEM helper task (schtasks exit {0})" -f $LASTEXITCODE) 'Yellow'
+        }
+    }
 
     # Poll every 100ms rather than every second. The helper usually reports
     # back in well under a second; the old loop slept a full second before
@@ -526,7 +539,7 @@ if ($failedTasks.Count -gt 0 -and -not $NoSystem) {
     # failure cost the whole 30. Same 30s ceiling, far shorter typical wait.
     Start-Phase 'SYSTEM helper'
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    while (-not (Test-Path $marker) -and $sw.Elapsed.TotalSeconds -lt 30) {
+    while ($schedOk -and -not (Test-Path $marker) -and $sw.Elapsed.TotalSeconds -lt 30) {
         Write-Progress -Activity 'Start-Quiet' `
                        -Status ("Retrying {0} protected task(s) as SYSTEM" -f $failedTasks.Count) `
                        -CurrentOperation ("waited {0:N1}s of 30" -f $sw.Elapsed.TotalSeconds) `
@@ -544,7 +557,8 @@ if ($failedTasks.Count -gt 0 -and -not $NoSystem) {
         }
         Remove-Item $marker -Force -ErrorAction SilentlyContinue
     } else {
-        Write-Log "SYSTEM helper did not report back within 30s - those tasks stay enabled" 'Yellow'
+        if ($schedOk) { Write-Log "SYSTEM helper did not report back within 30s - those tasks stay enabled" 'Yellow' }
+        else          { Write-Log "the Task Scheduler service refused the SYSTEM helper - those tasks stay enabled" 'Yellow' }
     }
     Remove-Item $helper -Force -ErrorAction SilentlyContinue
 }
@@ -555,6 +569,42 @@ elseif ($failedTasks.Count -gt 0) {
 # ================================================================
 #  3. SERVICES  -  disable, clear recovery actions, then stop
 # ================================================================
+
+# Stop-Service -Force has no timeout: one wedged service (WSearch mid-index is
+# the usual suspect) parks the whole elevated run with services half-disabled.
+# ServiceController.WaitForStatus does take one. .Stop() alone would not stop
+# dependents the way -Force does, so dependents are walked first to keep the
+# original behaviour.
+function Stop-ServiceBounded {
+    param([Parameter(Mandatory)][string]$Name, [int]$TimeoutSeconds = 20)
+
+    $svc = Get-Service -Name $Name -ErrorAction SilentlyContinue
+    if (-not $svc)                  { return $false }
+    if ($svc.Status -eq 'Stopped')  { return $true }
+
+    $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+    $left = { [int][Math]::Ceiling(($deadline - [DateTime]::UtcNow).TotalSeconds) }
+
+    foreach ($dep in @($svc.DependentServices | Where-Object { $_.Status -ne 'Stopped' })) {
+        if ((& $left) -lt 1) { break }
+        try {
+            $dep.Stop()
+            $dep.WaitForStatus('Stopped', [TimeSpan]::FromSeconds((& $left)))
+        } catch { }
+    }
+
+    $wait = & $left
+    if ($wait -lt 1) { $wait = 1 }
+    try {
+        $svc.Stop()
+        $svc.WaitForStatus('Stopped', [TimeSpan]::FromSeconds($wait))
+        return $true
+    } catch {
+        try { $svc.Refresh() } catch { }
+        return ($svc.Status -eq 'Stopped')
+    }
+}
+
 Write-Host ""
 Write-Host "3. Disabling services" -ForegroundColor White
 Start-Phase 'disable + stop services'
@@ -586,9 +636,8 @@ foreach ($s in $snapServices) {
     }
 
     # (c) stop it
-    $stopped = $false
-    try { Stop-Service -Name $name -Force -ErrorAction Stop; $stopped = $true }
-    catch { if ((Get-Service -Name $name -ErrorAction SilentlyContinue).Status -eq 'Stopped') { $stopped = $true } }
+    $stopped = [bool](Stop-ServiceBounded -Name $name)
+    if (-not $stopped) { Write-Log ("{0}: did not stop within 20s - leaving it running" -f $name) 'DarkGray' }
 
     # ---- last resort: the key is TrustedInstaller-owned -----------
     if (-not $disabled -and $UnlockMedic) {
@@ -614,7 +663,7 @@ foreach ($s in $snapServices) {
             }
         }
         if (-not $stopped) {
-            try { Stop-Service -Name $name -Force -ErrorAction Stop; $stopped = $true } catch { }
+            $stopped = [bool](Stop-ServiceBounded -Name $name)
         }
     }
 
