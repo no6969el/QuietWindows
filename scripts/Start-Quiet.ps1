@@ -1,5 +1,5 @@
 <#
-    Start-Quiet.ps1  -  MEDIC-UNLOCK EDITION               v3.3.0
+    Start-Quiet.ps1  -  MEDIC-UNLOCK EDITION               v1.0.3
     ================================================================
     Same as the standard Start-Quiet, with ONE difference: it takes
     ownership of the WaaSMedicSvc registry key by default, instead of
@@ -614,8 +614,9 @@ foreach ($s in $snapServices) {
     $name = $s.Name
     $key  = Join-Path $SvcRoot $name
     $i++
-    # Stop-Service blocks until the service actually stops. WSearch mid-index
-    # is the usual culprit for a long pause here, so name what we are waiting on.
+    # Stopping blocks until the service actually stops, capped at 20s by
+    # Stop-ServiceBounded. WSearch mid-index is the usual culprit for a long
+    # pause here, so name what we are waiting on.
     Write-Progress -Activity 'Start-Quiet' -Status ("Stopping services ({0} of {1})" -f $i, $snapServices.Count) `
                    -CurrentOperation ("{0} - this one can take a few seconds" -f $name) `
                    -PercentComplete (60 + (25 * $i / [Math]::Max(1,$snapServices.Count)))

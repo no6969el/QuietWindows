@@ -46,18 +46,20 @@ if ($TargetCore -lt 1 -or $TargetCore -ge $Limit) {
     Write-Host ""
     Write-Host "ABORTED: CPU $TargetCore is not a usable target on this machine ($Limit logical processors)." -ForegroundColor Red
     Write-Host "Nothing was changed. Run the QuietWindows-Menu once so it can save a correct core profile." -ForegroundColor DarkGray
-    return
+    exit 1
 }
 if (-not $Valid) {
     Write-Host ""
     Write-Host "ABORTED: this CPU's topology could not be identified, so interrupt steering is disabled." -ForegroundColor Red
     Write-Host "The rest of the kit still works. Nothing was changed." -ForegroundColor DarkGray
-    return
+    exit 1
 }
 
 # --- require admin ---
 $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $admin) { Write-Host "ERROR: right-click PowerShell and Run as Administrator, then re-run." -ForegroundColor Red; return }
+if (-not $admin) { Write-Host "ERROR: right-click PowerShell and Run as Administrator, then re-run." -ForegroundColor Red; exit 1 }
+
+$failed = 0
 
 # --- build the processor affinity mask (little-endian 8 bytes) ---
 $mask  = ([uint64]1) -shl $TargetCore
@@ -81,7 +83,7 @@ if (-not $gpus) {
         foreach ($d in $all) { Write-Host ("    - {0}  [{1}]" -f $d.FriendlyName, $d.InstanceId) -ForegroundColor DarkGray }
         Write-Host "  If your GPU is above, tell the kit author its VEN_XXXX id so it can be added." -ForegroundColor DarkGray
     }
-    return
+    exit 1
 }
 
 if ($Simulated) {
@@ -111,6 +113,7 @@ foreach ($g in $gpus) {
         New-ItemProperty -Path $key -Name 'AssignmentSetOverride' -PropertyType Binary -Value $bytes -Force | Out-Null
         Write-Host ("  -> GPU interrupts pinned to CPU {0} (mask 0x{1:X})  [verify driver '{2}' in LatencyMon]" -f $TargetCore, $mask, $ven.Driver) -ForegroundColor Green
     } catch {
+        $failed++
         Write-Host "  ERROR writing registry (permissions?): $_" -ForegroundColor Red
     }
 }
@@ -123,3 +126,4 @@ if ($Simulated) {
     Write-Host "the GPU driver's ISRs/DPCs now land on CPU $TargetCore instead of CPU 0." -ForegroundColor Yellow
     Write-Host "If it reverts after reboot (MSI-mode quirk), re-run this each session." -ForegroundColor DarkGray
 }
+if ($failed -gt 0) { exit 1 }

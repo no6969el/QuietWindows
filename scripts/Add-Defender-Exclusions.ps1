@@ -21,12 +21,12 @@
 . (Join-Path $PSScriptRoot 'Game-Library.ps1')
 
 $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $admin) { Write-Host "ERROR: right-click PowerShell -> Run as Administrator, then re-run." -ForegroundColor Red; return }
+if (-not $admin) { Write-Host "ERROR: right-click PowerShell -> Run as Administrator, then re-run." -ForegroundColor Red; exit 1 }
 
 if (-not (Get-Command Add-MpPreference -ErrorAction SilentlyContinue)) {
     Write-Host "ERROR: the Windows Defender commands are not available here (another antivirus installed?)." -ForegroundColor Red
     Write-Host "Add the same folders as exclusions in that product instead." -ForegroundColor Yellow
-    return
+    exit 1
 }
 
 Write-Host ""
@@ -68,7 +68,7 @@ if ($paths.Count -eq 0) {
     Write-Host "No game folders found yet." -ForegroundColor Yellow
     Write-Host "Open the QuietWindows menu -> My Games -> Add a game, point it at your" -ForegroundColor Yellow
     Write-Host "game's folder, then run this again." -ForegroundColor Yellow
-    return
+    return   # nothing to do is not a failure - leave the exit code at 0
 }
 
 # --- folders ---

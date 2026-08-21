@@ -1,5 +1,5 @@
 <#
-    Stop-Quiet.ps1  -  MEDIC-UNLOCK EDITION            v3.3.0
+    Stop-Quiet.ps1  -  MEDIC-UNLOCK EDITION            v1.0.3
     ================================================================
     Puts everything Start-Quiet touched back exactly as it was.
 

@@ -1,5 +1,5 @@
 <#
-    Check-Quiet-Status.ps1                                    v3.3.0
+    Check-Quiet-Status.ps1                                    v1.0.3
     ---------------------------------------------------------------
     READ-ONLY. Shows whether "game quiet" is active right now.
     No admin needed. Changes nothing.

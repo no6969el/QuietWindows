@@ -12,7 +12,9 @@
 #>
 
 $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $admin) { Write-Host "ERROR: Run as Administrator." -ForegroundColor Red; return }
+if (-not $admin) { Write-Host "ERROR: Run as Administrator." -ForegroundColor Red; exit 1 }
+
+$failed = 0
 
 Write-Host ""
 Write-Host "1) USB Selective Suspend -> OFF (active power plan)" -ForegroundColor Cyan
@@ -23,7 +25,7 @@ try {
     powercfg /setdcvalueindex SCHEME_CURRENT $usbSub $usbSetting 0 | Out-Null
     powercfg /setactive SCHEME_CURRENT | Out-Null
     Write-Host "   done - USB devices will no longer selectively suspend" -ForegroundColor Green
-} catch { Write-Host "   ! failed: $($_.Exception.Message)" -ForegroundColor Yellow }
+} catch { $failed++; Write-Host "   ! failed: $($_.Exception.Message)" -ForegroundColor Yellow }
 
 Write-Host ""
 Write-Host "2) Game Mode / Game Bar / Game DVR -> OFF" -ForegroundColor Cyan
@@ -37,7 +39,8 @@ try {
     Set-Reg 'HKCU:\Software\Microsoft\GameBar'        'AllowAutoGameMode'    0
     Set-Reg 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR' 'AllowGameDVR' 0
     Write-Host "   done - Game Mode/Bar/DVR disabled" -ForegroundColor Green
-} catch { Write-Host "   ! failed: $($_.Exception.Message)" -ForegroundColor Yellow }
+} catch { $failed++; Write-Host "   ! failed: $($_.Exception.Message)" -ForegroundColor Yellow }
 
 Write-Host ""
 Write-Host "Done. No reboot needed. (Undo with Undo-Extra-Tweaks.ps1)" -ForegroundColor Yellow
+if ($failed -gt 0) { exit 1 }

@@ -19,7 +19,7 @@
 #>
 
 $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $admin) { Write-Host "ERROR: right-click PowerShell -> Run as Administrator, then re-run." -ForegroundColor Red; return }
+if (-not $admin) { Write-Host "ERROR: right-click PowerShell -> Run as Administrator, then re-run." -ForegroundColor Red; exit 1 }
 
 $key = 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\kernel'
 
@@ -33,10 +33,11 @@ try {
         Write-Host "  GlobalTimerResolutionRequests = 1  (set)" -ForegroundColor Green
     } else {
         Write-Host "  ! value reads back as $v - expected 1" -ForegroundColor Yellow
+        exit 1
     }
 } catch {
     Write-Host "  ERROR writing registry: $($_.Exception.Message)" -ForegroundColor Red
-    return
+    exit 1
 }
 
 Write-Host ""
