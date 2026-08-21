@@ -246,7 +246,13 @@ next to `QuietWindows-Menu.ps1` — moving one file out on its own breaks it.
 
 **"Nothing happens when I press a button."**
 You probably said No to the Windows permission box, or it appeared behind
-another window. Check your taskbar for a flashing blue shield.
+another window. Check your taskbar for a flashing blue shield. If you did
+say No, the window now tells you so instead of closing quietly.
+
+**"It said some steps reported a problem."**
+Nothing is broken and nothing was half-applied — each fix is independent.
+Scroll up in that window for the red lines naming which one failed, or run
+the steps one at a time from `QuietWindows.bat` to see the detail.
 
 **"The recording has empty columns."**
 Go to Advanced and run *Repair Windows performance counters*, then restart.
