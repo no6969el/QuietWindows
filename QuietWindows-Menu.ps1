@@ -554,8 +554,10 @@ function Launch-Script {
     $env:QW_SIMULATED       = $(if ($cfg.Simulated) { '1' } else { '0' })
     $argStr = "-NoExit -ExecutionPolicy Bypass -File `"$Path`""
     try {
-        if ($Admin) { Start-Process 'powershell.exe' -Verb RunAs -ArgumentList $argStr }
-        else        { Start-Process 'powershell.exe'           -ArgumentList $argStr }
+        # -ErrorAction Stop: a declined UAC prompt is non-terminating, so
+        # without it the catch below never runs and the failure is invisible.
+        if ($Admin) { Start-Process 'powershell.exe' -Verb RunAs -ArgumentList $argStr -ErrorAction Stop }
+        else        { Start-Process 'powershell.exe'           -ArgumentList $argStr -ErrorAction Stop }
     } catch {
         [System.Windows.MessageBox]::Show("That did not start - either something went wrong, or you said No to the Windows permission prompt.","Nothing ran")
     }
@@ -817,7 +819,7 @@ $Window.FindName("BtnRunAuto").Add_Click({
     $sb += " Write-Host ''; Write-Host 'ALL DONE - restart your PC once. This window closes in 6 seconds...' -ForegroundColor Green; Start-Sleep 6"
     try {
         $enc = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($sb))
-        Start-Process powershell.exe -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -EncodedCommand $enc"
+        Start-Process powershell.exe -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -EncodedCommand $enc" -ErrorAction Stop
     } catch {
         [System.Windows.MessageBox]::Show("You said No to the Windows prompt, so nothing was changed.","Nothing ran")
     }

@@ -6,9 +6,22 @@ Versions follow `MAJOR.MINOR.PATCH`. The authoritative version is
 `$KitVersion` in `scripts/Kit-Common.ps1`; the banner at the top of each
 script is stamped to match at release time.
 
+### A note on version lineage
+
+QuietWindows is a **1.x** product. It was rebased from the *iRacing X3D
+Tuning Kit*, which had its own **3.x** line, and several scripts still
+carried inherited `v3.3.0` banners after the rebrand — even though the
+published releases were `v1.0.0`, `v1.0.1`, and `v1.0.2`. Those stamps are
+corrected in 1.0.3.
+
+References to `v3.x` in the *body* of a script are deliberately left alone.
+They are accurate history of the tuning kit — which services an `xperf`
+session justified adding, what v3.2.5 missed — and renumbering them would
+falsify the record. Only the version stamps were wrong, not the history.
+
 ---
 
-## [3.3.1] — 2026-08-21
+## [1.0.3] — 2026-08-21
 
 Error-reporting fixes. **No change to what gets disabled, restored, or
 written.** No new settings, no snapshot format change, no migration.
@@ -61,9 +74,12 @@ success regardless.
   message distinguishing a refused scheduler from a helper that never
   reported back. (`Start-Quiet.ps1`)
 
+- **Inherited version stamps.** `$KitVersion` and five script banners read
+  `v3.3.0`, carried over from the iRacing X3D Tuning Kit, while the product
+  shipped as `v1.0.x`. All stamps now read `1.0.3`.
+
 ### Changed
 
-- Version stamps bumped to 3.3.1 across script banners and `$KitVersion`.
 - `HOW-TO.md`: troubleshooting entry added for the "some steps reported a
   problem" message, and the "nothing happens" entry now notes that a
   declined prompt is reported rather than passing silently.
@@ -92,9 +108,9 @@ the old version before upgrading is unnecessary but harmless.
 
 ---
 
-## [3.3.0] and earlier
+## [1.0.2] and earlier
 
-Not tracked in this file. See the commit history and the `WHAT CHANGED`
-sections in the headers of `scripts/Start-Quiet.ps1` and
-`scripts/Kit-Common.ps1`, which record the v3.3.0 service and task
-additions derived from recorded `xperf` sessions.
+Not tracked in this file; see the GitHub releases page. Engineering history
+for the 3.x tuning-kit lineage this was rebased from lives in the `WHAT
+CHANGED` sections at the top of `scripts/Start-Quiet.ps1` and
+`scripts/Kit-Common.ps1`.
