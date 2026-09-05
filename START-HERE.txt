@@ -1,57 +1,39 @@
-QUIETWINDOWS
+﻿QUIETWINDOWS
 ============
 
 Quiet Windows down so your games get the whole PC.
 
 
-IF YOU READ NOTHING ELSE
-------------------------
+ONE PATH
+--------
 
-   Double-click:   QuietWindows.bat
+   1. Double-click:   QuietWindows.bat
+   2. Press the big green button:  QUIET MY PC DOWN
+   3. Restart when it tells you to.
 
-   Press the big green button.
-   Restart your PC when it tells you to.
-
-   That's it. You're done.
-
-
-THEN, EVERY TIME YOU PLAY
--------------------------
-
-   Open QuietWindows.bat again and use "Before & after playing".
-
-   Before you play:  press "Quiet Windows down"
-   After you play:   press "Wake Windows back up"
-
-   That second one matters. Until you press it, Windows Update is
-   switched off on your PC. Press it when you finish playing.
+   That's setup. You only do it once.
 
 
-WHAT'S IN THIS FOLDER
----------------------
+EVERY TIME YOU PLAY
+-------------------
 
-   QuietWindows.bat      The menu. This is the one you want.
-   Optimize-My-PC.bat    Same fixes, no menu, no questions.
-   README.md             What this is and why it works.
-   HOW-TO.md             The walkthrough. Written for normal people.
-   scripts\              The individual tools the menu runs.
-   extras\               Fixes for one specific game only.
+   Open QuietWindows.bat again -> "BEFORE & AFTER PLAYING"
+
+   Before:  "Quiet Windows down"
+   After:   "Wake Windows back up"
+
+   That second button matters. Until you press it, Windows Update
+   stays off. Press it when you finish playing.
 
 
-THINGS PEOPLE WORRY ABOUT
--------------------------
+NO MENU?
+--------
 
-"Will this break my PC?"
-   No. Every change has an Undo button, and it writes down what your
-   settings were before it touched anything so it can put them back.
+   Optimize-My-PC.bat does the same one-time setup with no menu.
 
-"Do I need to know what any of this means?"
-   No. Every button says in plain words what it's about to do.
 
-"Windows keeps asking me for permission."
-   That's normal. Anything that changes a Windows setting makes
-   Windows ask first. Say Yes.
+MORE DETAIL
+-----------
 
-"I don't want to turn off my antivirus."
-   You're not. It keeps protecting your whole PC. It just stops
-   re-scanning your game files over and over while you're playing them.
+   HOW-TO.md     step-by-step walkthrough (normal people)
+   README.md     what it does and why

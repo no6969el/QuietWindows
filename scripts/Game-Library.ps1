@@ -2,37 +2,15 @@
     Game-Library.ps1  -  which games QuietWindows looks after        v1.0.0
     ================================================================
     SINGLE SOURCE OF TRUTH for "what counts as a game on this PC".
+    Dot-source:  . (Join-Path $PSScriptRoot 'Game-Library.ps1')
 
-    Dot-source it:
+    One list (instead of the same game name typed into many scripts).
+    Stored at %APPDATA%\QuietWindows\games.json. No admin; changes no
+    Windows settings - safe for read-only scripts to load.
 
-        . (Join-Path $PSScriptRoot 'Game-Library.ps1')
-
-    WHY THIS EXISTS
-    ---------------
-    The kit this grew out of was built for one game, and that one
-    game's name was typed into eight different scripts. Defender knew
-    it, the recorder knew it, the stutter finder knew it, the ready
-    check knew it. Adding a second game meant editing all eight.
-
-    Now there is one list. Everything reads it:
-
-      Get-GameList          the games we know about
-      Get-GameExeNames      just the program names, for process matching
-      Get-GameFolders       just the folders, for Defender exclusions
-      Get-RunningGame       is a game running right now, and which one
-      Test-IsGameProcess    does this process name belong to a game
-      Find-InstalledGames   scan Steam / Epic / GOG / Xbox / EA / Ubisoft
-      Add-GameEntry         add one by hand
-      Remove-GameEntry      take one back out
-      Save-GameList         write the list to disk
-      Reset-GameList        forget everything and re-scan
-
-    The list lives at:
-        %APPDATA%\QuietWindows\games.json
-
-    This file only reads and writes that one small file. It changes no
-    Windows settings and needs no admin, so a read-only script can load
-    it safely.
+    Main entry points: Get-GameList / Get-GameExeNames / Get-GameFolders /
+    Get-RunningGame / Test-IsGameProcess / Find-InstalledGames /
+    Add-GameEntry / Remove-GameEntry / Save-GameList / Reset-GameList.
 #>
 
 $script:GameSchemaVersion = 1

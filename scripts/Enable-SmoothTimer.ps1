@@ -18,8 +18,13 @@
     Reversible with Undo-SmoothTimer.ps1.
 #>
 
-$admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $admin) { Write-Host "ERROR: right-click PowerShell -> Run as Administrator, then re-run." -ForegroundColor Red; exit 1 }
+$common = Join-Path $PSScriptRoot 'Kit-Common.ps1'
+if (-not (Test-Path $common)) {
+    Write-Host "ERROR: scripts\Kit-Common.ps1 is missing - re-unzip the kit." -ForegroundColor Red
+    exit 1
+}
+. $common
+if (Request-AdminRelaunch) { return }
 
 $key = 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\kernel'
 

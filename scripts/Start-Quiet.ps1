@@ -1,91 +1,32 @@
 <#
-    Start-Quiet.ps1  -  MEDIC-UNLOCK EDITION               v1.0.3
+    Start-Quiet.ps1  -  quiet Windows for a play session          v1.0.4
     ================================================================
-    Same as the standard Start-Quiet, with ONE difference: it takes
-    ownership of the WaaSMedicSvc registry key by default, instead of
-    asking you to pass -UnlockMedic.
+    Puts Windows Update, Search, Store updates, and related background
+    noise on hold so your game gets the machine. Saves a snapshot first
+    so Stop-Quiet.ps1 can put everything back exactly.
 
-    WHY THIS EXISTS
-    ---------------
-    On some Windows builds WaaSMedicSvc's registry key is owned by
-    TrustedInstaller and refuses to be disabled even when running as SYSTEM.
-    Windows Update Medic then keeps switching the update services back on,
-    roughly every ten minutes - mid-game, with a stutter each time.
-
-    The standard edition stops at that point and tells you. This edition
-    goes through: it takes ownership of that one key, disables the service,
-    and hands ownership straight back in the same run.
-
-    USE THIS ONLY IF you have confirmed Medic is the problem. Run
-    Watch-For-Reverts.ps1 first - if it reports
-        "WaaSMedicSvc: stopped, but could NOT disable (protected)"
-    then this edition is what you want. Otherwise use the standard one.
-
-    WHAT CHANGED IN v3.3.0
-    ----------------------
-    Everything added in this version came from an xperf HARD_FAULTS trace
-    of one real 25-minute session - kernel-level, with filenames, not
-    inference. It is a single reference machine (Win11, 64 GB, NVMe), so
-    treat the numbers as an example of WHAT to look for rather than as
-    universal truth; the processes involved are stock Windows components
-    that exist on every install. 4,712 hard faults were captured:
-
-        1,729  System (4)              $Mft, $UsnJrnl - NTFS metadata
-          829  backgroundTaskHost.exe  WinStore.App.dll  (Microsoft Store)
-          251  MicrosoftEdgeUpdate.exe
-          245  SearchHost.exe          Start-menu web components
-          222  a peripheral vendor's tray app
-          201  TabTip.exe              touch keyboard
-          170  ctfmon.exe
-          152  TextInputHost.exe
-          250  two more third-party overlays
-           14  the game itself         <-- yes, fourteen
-
-    The game was responsible for 0.3% of them. Everything it did read
-    was 17 events of level data during loading, which is exactly when
-    you want it reading things.
-
-    So this kit is aimed correctly, but v3.2.5 was missing the biggest
-    single offender: the Microsoft Store deciding to update apps mid-game.
-    Added in v3.3.0: InstallService, edgeupdate/edgeupdatem, PcaSvc,
-    TabletInputService, 19 more scheduled tasks, and the Store
-    auto-download policy.
-
-    WHAT IT TOUCHES
-    ---------------
-    HKLM\SYSTEM\CurrentControlSet\Services\WaaSMedicSvc  -  owner and
-    permissions, briefly. The original security descriptor is saved to the
-    snapshot AND to a separate .sddl file before anything is changed, and
-    permissions are handed back within the same run - the key is only in a
-    modified state for a few seconds, not for the length of your session.
-
-    Stop-Quiet re-verifies the owner and permissions afterwards, and
-    refuses to delete the snapshot while any key is still unrestored.
-
-    >>> Stop-Quiet.ps1 IS REQUIRED. <<<
-    Services are disabled, not stopped - nothing self-heals on reboot.
-    Until you restore, this PC has no Windows Update and, since Defender
-    signature updates ride the same services, no fresh definitions.
+    DANGER
+      Services are disabled, not merely stopped. Nothing self-heals on
+      reboot. Until you run Stop-Quiet.ps1, this PC has no Windows Update
+      and no fresh Defender definitions. Always wake Windows back up
+      when you finish (menu button 2, or this script's pair).
 
     USAGE
-      .\Start-Quiet.ps1              quiet + unlock Medic (the point of this edition)
-      .\Start-Quiet.ps1 -Verify      wait 3 min afterwards, report anything that came back
-      .\Start-Quiet.ps1 -NoUnlock    behave like the standard edition
-      .\Start-Quiet.ps1 -KeepSearch  leave Windows Search alone
-      .\Start-Quiet.ps1 -KeepTouchKeyboard  leave TabletInputService alone (VR keyboard)
-      .\Start-Quiet.ps1 -KeepStore   leave the Store auto-download policy alone
-      .\Start-Quiet.ps1 -CloseApps   also close Telegram / MOZA Pit House / webview hosts
-      .\Start-Quiet.ps1 -SkipDefender  leave Defender real-time alone
-      .\Start-Quiet.ps1 -Deadman     auto-restore at next boot if you forget
-      .\Start-Quiet.ps1 -Force       discard the saved snapshot (rarely wanted)
+      .\Start-Quiet.ps1                 quiet (Medic unlock on by default)
+      .\Start-Quiet.ps1 -NoUnlock       skip Medic registry unlock
+      .\Start-Quiet.ps1 -Deadman        auto-restore at next boot if you forget
+      .\Start-Quiet.ps1 -Verify         wait, then report anything that came back
+      .\Start-Quiet.ps1 -KeepSearch     leave Windows Search alone
+      .\Start-Quiet.ps1 -KeepTouchKeyboard  leave TabletInputService alone
+      .\Start-Quiet.ps1 -KeepStore      leave Store auto-download policy alone
+      .\Start-Quiet.ps1 -CloseApps      also close chat / overlay hosts
+      .\Start-Quiet.ps1 -SkipDefender   leave Defender real-time alone
+      .\Start-Quiet.ps1 -Force          discard the saved snapshot (rarely wanted)
 
-    RUNNING IT TWICE
-    ----------------
-    Safe. An existing snapshot means you quieted and haven't restored, so it
-    re-applies from that snapshot and keeps it. Your original startup types
-    and permissions are preserved.
+    Safe to run twice: an existing snapshot is kept; originals are preserved.
+    Self-elevates. Tamper Protection must be OFF for the Defender part.
 
-    Self-elevates. Requires Tamper Protection OFF for the Defender part.
+    History / design notes: see CHANGELOG.md and README.md in the kit root.
 #>
 
 [CmdletBinding()]
@@ -121,15 +62,9 @@ if (-not (Test-Path $common)) {
     return
 }
 . $common
-# Provides: $KitVersion, $ServicesToQuiet, $TasksToDisable, $ServiceDefaults
-
-
-
-# ================================================================
-$StateDir  = Join-Path ([Environment]::GetFolderPath('CommonApplicationData')) 'QuietWindows'
-$StateFile = Join-Path $StateDir 'state.json'
-$LogFile   = Join-Path $StateDir 'QuietWindows.log'
-$SvcRoot   = 'HKLM:\SYSTEM\CurrentControlSet\Services'
+# Provides: $KitVersion, $ServicesToQuiet, $TasksToDisable, $ServiceDefaults,
+#           $StateDir/$StateFile/$LogFile/$SvcRoot, Write-Log,
+#           Initialize-Privileges, Request-AdminRelaunch, Invoke-SystemHop
 
 # ================================================================
 #  Speed helpers
@@ -174,53 +109,12 @@ function Stop-Phase {
     $script:PhaseSw = $null
 }
 
-function Write-Log {
-    param([string]$Msg, [string]$Color = 'Gray', [switch]$NoHost)
-    $line = ("{0}  {1}" -f ([DateTime]::Now.ToString('yyyy-MM-dd HH:mm:ss', [Globalization.CultureInfo]::InvariantCulture)), $Msg)
-    try {
-        if (-not (Test-Path $StateDir)) { New-Item -ItemType Directory -Path $StateDir -Force | Out-Null }
-        Add-Content -Path $LogFile -Value $line -Encoding utf8 -ErrorAction SilentlyContinue
-    } catch { }
-    if (-not $NoHost) { Write-Host ("  " + $Msg) -ForegroundColor $Color }
-}
 
 
 # ================================================================
-#  Registry ownership helpers - only used by -UnlockMedic
+#  Registry ownership helpers - used when Medic unlock is on (default; -NoUnlock skips)
+#  (Initialize-Privileges lives in Kit-Common.ps1)
 # ================================================================
-function Initialize-Privileges {
-    # Taking ownership needs SeTakeOwnershipPrivilege, and handing it back to
-    # TrustedInstaller needs SeRestorePrivilege. Admins hold both, but they
-    # are disabled in the token until explicitly enabled.
-    if ('RQPriv' -as [type]) { return $true }
-    $code = @'
-using System;
-using System.Runtime.InteropServices;
-public class RQPriv {
-    [DllImport("advapi32.dll", SetLastError=true)]
-    static extern bool OpenProcessToken(IntPtr h, uint acc, out IntPtr tok);
-    [DllImport("advapi32.dll", SetLastError=true)]
-    static extern bool LookupPrivilegeValue(string host, string name, out long luid);
-    [DllImport("advapi32.dll", SetLastError=true)]
-    static extern bool AdjustTokenPrivileges(IntPtr tok, bool disall, ref TOKPRIV1LUID newst, int len, IntPtr prev, IntPtr rel);
-    [StructLayout(LayoutKind.Sequential, Pack=1)]
-    public struct TOKPRIV1LUID { public int Count; public long Luid; public int Attr; }
-    public static bool Enable(string priv) {
-        IntPtr tok = IntPtr.Zero;
-        if (!OpenProcessToken(System.Diagnostics.Process.GetCurrentProcess().Handle, 0x28, out tok)) return false;
-        TOKPRIV1LUID tp;
-        tp.Count = 1;
-        tp.Luid  = 0;
-        tp.Attr  = 2;   // SE_PRIVILEGE_ENABLED
-        if (!LookupPrivilegeValue(null, priv, out tp.Luid)) return false;
-        return AdjustTokenPrivileges(tok, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
-    }
-}
-'@
-    try { Add-Type -TypeDefinition $code -ErrorAction Stop } catch { return $false }
-    return $true
-}
-
 function Unlock-ServiceKey {
     <#
         Take ownership of a service's registry key so its Start value can be
@@ -275,34 +169,29 @@ function Unlock-ServiceKey {
 }
 
 # ---- self-elevate -------------------------------------------------
-$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $isAdmin) {
-    Write-Host "Elevating..." -ForegroundColor Cyan
-    $argList = @('-NoProfile','-ExecutionPolicy','Bypass','-File', ('"{0}"' -f $PSCommandPath))
-    if ($Force)        { $argList += '-Force' }
-    if ($SkipDefender) { $argList += '-SkipDefender' }
-    if ($KeepSearch)   { $argList += '-KeepSearch' }
-    if ($NoSystem)     { $argList += '-NoSystem' }
-    if ($Verify)       { $argList += @('-Verify','-VerifyDelay',$VerifyDelay) }
-    if ($Deadman)      { $argList += '-Deadman' }
-    if ($NoUnlock)     { $argList += '-NoUnlock' }
-    if ($KeepTouchKeyboard) { $argList += '-KeepTouchKeyboard' }
-    if ($KeepStore)    { $argList += '-KeepStore' }
-    if ($CloseApps)    { $argList += '-CloseApps' }
-    try   { Start-Process powershell.exe -Verb RunAs -ArgumentList $argList }
-    catch { Write-Host "Elevation cancelled - nothing was changed." -ForegroundColor Yellow }
+$elevateArgs = @()
+if ($Force)        { $elevateArgs += '-Force' }
+if ($SkipDefender) { $elevateArgs += '-SkipDefender' }
+if ($KeepSearch)   { $elevateArgs += '-KeepSearch' }
+if ($NoSystem)     { $elevateArgs += '-NoSystem' }
+if ($Verify)       { $elevateArgs += @('-Verify','-VerifyDelay',$VerifyDelay) }
+if ($Deadman)      { $elevateArgs += '-Deadman' }
+if ($NoUnlock)     { $elevateArgs += '-NoUnlock' }
+if ($KeepTouchKeyboard) { $elevateArgs += '-KeepTouchKeyboard' }
+if ($KeepStore)    { $elevateArgs += '-KeepStore' }
+if ($CloseApps)    { $elevateArgs += '-CloseApps' }
+if (Request-AdminRelaunch -ExtraArgs $elevateArgs -CancelMessage 'Elevation cancelled - nothing was changed.') {
     return
 }
-
 if (-not (Test-Path $StateDir)) { New-Item -ItemType Directory -Path $StateDir -Force | Out-Null }
 
 Write-Host ""
-Write-Host "========  PRE-GAME QUIET (MEDIC-UNLOCK EDITION)  ========" -ForegroundColor Cyan
+Write-Host "========  PRE-GAME QUIET  ========" -ForegroundColor Cyan
 if ($UnlockMedic) {
     Write-Host "  Medic unlock is ON. If WaaSMedicSvc refuses to disable, this" -ForegroundColor Yellow
     Write-Host "  will take ownership of its registry key, disable it, and hand" -ForegroundColor Yellow
     Write-Host "  ownership straight back. Original permissions are saved first." -ForegroundColor Yellow
-    Write-Host "  Run with -NoUnlock to behave like the standard edition." -ForegroundColor DarkGray
+    Write-Host "  Pass -NoUnlock to skip Medic unlock." -ForegroundColor DarkGray
 }
 Write-Log ("=== Start-Quiet v{0} starting ===" -f $KitVersion) 'Gray' -NoHost
 
@@ -502,7 +391,6 @@ if ($failedTasks.Count -gt 0 -and -not $NoSystem) {
     Write-Host ("  {0} task(s) refused - retrying as SYSTEM" -f $failedTasks.Count) -ForegroundColor Yellow
     $helper = Join-Path $StateDir 'system-hop.ps1'
     $marker = Join-Path $StateDir 'system-hop.done'
-    if (Test-Path $marker) { Remove-Item $marker -Force -ErrorAction SilentlyContinue }
 
     $lines = @('$done = @()')
     foreach ($f in $failedTasks) {
@@ -515,50 +403,31 @@ if ($failedTasks.Count -gt 0 -and -not $NoSystem) {
     $lines += ("`$done | Out-File -FilePath '{0}' -Encoding utf8" -f ($marker -replace "'","''"))
     Set-Content -Path $helper -Value $lines -Encoding utf8
 
-    $taskName = 'QuietWindows-SystemHop'
     $cmd = ('powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{0}"' -f $helper)
-    # Check the exit codes rather than waiting out the full 30s poll below
-    # when the task engine refused the job outright.
-    $schedOk = $true
-    & schtasks.exe /Create /TN $taskName /TR $cmd /SC ONCE /ST 00:00 /RU SYSTEM /RL HIGHEST /F 2>&1 | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        $schedOk = $false
-        Write-Log ("could not create the SYSTEM helper task (schtasks exit {0})" -f $LASTEXITCODE) 'Yellow'
-    }
-    if ($schedOk) {
-        & schtasks.exe /Run /TN $taskName 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            $schedOk = $false
-            Write-Log ("could not start the SYSTEM helper task (schtasks exit {0})" -f $LASTEXITCODE) 'Yellow'
+    Start-Phase 'SYSTEM helper'
+    $hop = Invoke-SystemHop -TaskName 'QuietWindows-SystemHop' `
+                            -CommandLine $cmd `
+                            -ResultFile $marker `
+                            -TimeoutSeconds 30 `
+                            -ProgressActivity 'Start-Quiet' `
+                            -ProgressStatus ("Retrying {0} protected task(s) as SYSTEM" -f $failedTasks.Count)
+    Stop-Phase
+
+    if (-not $hop.SchedOk) {
+        if ($null -ne $hop.CreateExit -and $hop.CreateExit -ne 0) {
+            Write-Log ("could not create the SYSTEM helper task (schtasks exit {0})" -f $hop.CreateExit) 'Yellow'
+        } elseif ($null -ne $hop.RunExit -and $hop.RunExit -ne 0) {
+            Write-Log ("could not start the SYSTEM helper task (schtasks exit {0})" -f $hop.RunExit) 'Yellow'
         }
     }
-
-    # Poll every 100ms rather than every second. The helper usually reports
-    # back in well under a second; the old loop slept a full second before
-    # even looking, so a fast success still cost a second and a silent
-    # failure cost the whole 30. Same 30s ceiling, far shorter typical wait.
-    Start-Phase 'SYSTEM helper'
-    $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    while ($schedOk -and -not (Test-Path $marker) -and $sw.Elapsed.TotalSeconds -lt 30) {
-        Write-Progress -Activity 'Start-Quiet' `
-                       -Status ("Retrying {0} protected task(s) as SYSTEM" -f $failedTasks.Count) `
-                       -CurrentOperation ("waited {0:N1}s of 30" -f $sw.Elapsed.TotalSeconds) `
-                       -PercentComplete 55
-        Start-Sleep -Milliseconds 100
-    }
-    $sw.Stop()
-    Stop-Phase
-    & schtasks.exe /Delete /TN $taskName /F 2>&1 | Out-Null
-
-    if (Test-Path $marker) {
-        foreach ($l in (Get-Content $marker)) {
+    if ($hop.Reported) {
+        foreach ($l in $hop.Lines) {
             if ($l -like 'OK*')   { Write-Log ("SYSTEM " + $l) 'Green' }
             else                  { Write-Log ("SYSTEM " + $l) 'Yellow' }
         }
-        Remove-Item $marker -Force -ErrorAction SilentlyContinue
     } else {
-        if ($schedOk) { Write-Log "SYSTEM helper did not report back within 30s - those tasks stay enabled" 'Yellow' }
-        else          { Write-Log "the Task Scheduler service refused the SYSTEM helper - those tasks stay enabled" 'Yellow' }
+        if ($hop.SchedOk) { Write-Log "SYSTEM helper did not report back within 30s - those tasks stay enabled" 'Yellow' }
+        else              { Write-Log "the Task Scheduler service refused the SYSTEM helper - those tasks stay enabled" 'Yellow' }
     }
     Remove-Item $helper -Force -ErrorAction SilentlyContinue
 }
@@ -671,7 +540,7 @@ foreach ($s in $snapServices) {
     if ($disabled -and $stopped)      { Write-Log ("{0}: disabled + stopped" -f $name) 'Green' }
     elseif ($disabled)                { Write-Log ("{0}: disabled, still running - it will not come back after a reboot" -f $name) 'Yellow' }
     elseif ($stopped)                 { Write-Log ("{0}: stopped, but could NOT disable (protected) - may return" -f $name) 'Yellow'
-                                        if (-not $UnlockMedic) { Write-Log ("   re-run with -UnlockMedic to force it (see the script header)" -f $name) 'Yellow' } }
+                                        if (-not $UnlockMedic) { Write-Log ("   re-run without -NoUnlock to force it (see the script header)" -f $name) 'Yellow' } }
     else                              { Write-Log ("{0}: could not disable or stop (protected)" -f $name) 'Yellow' }
 }
 Stop-Phase

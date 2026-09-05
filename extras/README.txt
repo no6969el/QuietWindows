@@ -1,30 +1,24 @@
-EXTRAS  -  fixes that only apply to one particular game
+﻿EXTRAS  -  fixes that only apply to one particular game
 =======================================================
 
-Everything on the main QuietWindows pages helps any game. The stuff in
-here does not. Each folder below is named after one game, and what is
-inside it only makes sense if you play that game. If you do not, ignore
-the folder - nothing in here runs on its own.
+You usually want the main QuietWindows menu, not this folder.
 
-These show up automatically in the QuietWindows menu under EXTRAS.
+Everything on the main pages helps any game. What is in here does not.
+Each subfolder is named after one game; ignore any game you don't play.
+Nothing here runs on its own - the menu's EXTRAS page lists these buttons.
 
 
 ADDING YOUR OWN
 ---------------
-1. Make a folder in here named after the game.
+1. Make a folder named after the game.
       extras\My Game\
 
-2. Put your PowerShell files (.ps1) in it. Each one becomes a button,
-   and the button's name is the file name with the dashes turned into
-   spaces. So:
-      Check-Settings.ps1     ->  a button reading "Check Settings"
+2. Put .ps1 files in it. Each becomes a button (dashes turn into spaces):
+      Check-Settings.ps1     ->  "Check Settings"
 
-3. If a file needs Windows to ask permission first, start its name with
-   "Admin-":
+3. Needs permission? Start the file name with Admin-:
       Admin-Fix-Something.ps1  ->  "Fix Something   (permission needed)"
 
-4. Optional: put a README.txt in the folder. Its text appears under the
-   folder's heading in the menu, so you can explain what the buttons do.
+4. Optional README.txt in the folder - its text shows under the heading.
 
-Reopen the EXTRAS page and your folder is there. No editing of any
-QuietWindows file is needed.
+Reopen EXTRAS and your folder is there. No QuietWindows file edits needed.

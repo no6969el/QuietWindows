@@ -1,5 +1,5 @@
 <#
-    Kit-Common.ps1  -  shared constants for the quiet-mode scripts    v1.0.3
+    Kit-Common.ps1  -  shared constants + helpers for quiet-mode    v1.0.4
     ================================================================
     SINGLE SOURCE OF TRUTH for the kit version and for everything
     Start-Quiet turns off. Dot-source it:
@@ -28,16 +28,33 @@
       $TasksToDisable     the same four scripts
       $ServiceDefaults    Stop-Quiet only, and only when there is
                           no snapshot to replay
+      $StateDir / etc.    shared state + log paths
+      Write-Log / ...     logging, privileges, elevation, SYSTEM hop
+      Test-IsAdmin        boolean: is this process elevated?
+      Request-AdminRelaunch  if not admin, UAC-relaunch and return $true
+                          (caller should return). Already admin -> $false.
+                          Menu launches with -Admin already elevated, so
+                          no double UAC. Use for CLI/double-click scripts.
 
-    This file only declares data. It runs nothing, changes nothing, and
-    needs no elevation, so it is safe for a read-only script to load.
+    Holds shared constants AND helpers (logging, privileges, elevation,
+    SYSTEM hop, hard-fault helpers, quiet lists). Dot-sourcing is still
+    safe for read-only scripts: the helpers only run when called.
 #>
 
 # ================================================================
 #  KIT VERSION
 #  Bump here and every script's banner follows.
 # ================================================================
-$KitVersion = '1.0.3'
+$KitVersion = '1.0.4'
+
+# ================================================================
+#  SHARED PATHS
+#  Start-Quiet / Stop-Quiet logging and snapshot state.
+# ================================================================
+$StateDir  = Join-Path ([Environment]::GetFolderPath('CommonApplicationData')) 'QuietWindows'
+$StateFile = Join-Path $StateDir 'state.json'
+$LogFile   = Join-Path $StateDir 'QuietWindows.log'
+$SvcRoot   = 'HKLM:\SYSTEM\CurrentControlSet\Services'
 
 # ================================================================
 #  SERVICES
@@ -153,6 +170,163 @@ $ServiceDefaults = @{
     'edgeupdatem'        = 3
     'PcaSvc'             = 2
     'TabletInputService' = 3
+}
+
+
+# ================================================================
+#  SHARED HELPERS
+#  Logging, privileges, elevation, and the schtasks SYSTEM hop.
+#  Start-Quiet and Stop-Quiet both use these; keep behaviour here.
+# ================================================================
+
+function Write-Log {
+    param([string]$Msg, [string]$Color = 'Gray', [switch]$NoHost)
+    $line = ("{0}  {1}" -f ([DateTime]::Now.ToString('yyyy-MM-dd HH:mm:ss', [Globalization.CultureInfo]::InvariantCulture)), $Msg)
+    try {
+        if (-not (Test-Path $StateDir)) { New-Item -ItemType Directory -Path $StateDir -Force | Out-Null }
+        Add-Content -Path $LogFile -Value $line -Encoding utf8 -ErrorAction SilentlyContinue
+    } catch { }
+    if (-not $NoHost) { Write-Host ("  " + $Msg) -ForegroundColor $Color }
+}
+
+function Initialize-Privileges {
+    # Taking ownership needs SeTakeOwnershipPrivilege, and handing it back to
+    # TrustedInstaller needs SeRestorePrivilege. Admins hold both, but they
+    # are disabled in the token until explicitly enabled.
+    if ('RQPriv' -as [type]) { return $true }
+    $code = @'
+using System;
+using System.Runtime.InteropServices;
+public class RQPriv {
+    [DllImport("advapi32.dll", SetLastError=true)]
+    static extern bool OpenProcessToken(IntPtr h, uint acc, out IntPtr tok);
+    [DllImport("advapi32.dll", SetLastError=true)]
+    static extern bool LookupPrivilegeValue(string host, string name, out long luid);
+    [DllImport("advapi32.dll", SetLastError=true)]
+    static extern bool AdjustTokenPrivileges(IntPtr tok, bool disall, ref TOKPRIV1LUID newst, int len, IntPtr prev, IntPtr rel);
+    [StructLayout(LayoutKind.Sequential, Pack=1)]
+    public struct TOKPRIV1LUID { public int Count; public long Luid; public int Attr; }
+    public static bool Enable(string priv) {
+        IntPtr tok = IntPtr.Zero;
+        if (!OpenProcessToken(System.Diagnostics.Process.GetCurrentProcess().Handle, 0x28, out tok)) return false;
+        TOKPRIV1LUID tp;
+        tp.Count = 1;
+        tp.Luid  = 0;
+        tp.Attr  = 2;   // SE_PRIVILEGE_ENABLED
+        if (!LookupPrivilegeValue(null, priv, out tp.Luid)) return false;
+        return AdjustTokenPrivileges(tok, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
+    }
+}
+'@
+    try { Add-Type -TypeDefinition $code -ErrorAction Stop } catch { return $false }
+    return $true
+}
+
+function Test-IsAdmin {
+    <#
+        .SYNOPSIS
+        True if this process is running elevated (Administrator).
+        Use when you only need a check (e.g. soft warnings). Prefer
+        Request-AdminRelaunch when the script must elevate to continue.
+    #>
+    return ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+function Request-AdminRelaunch {
+    <#
+        .SYNOPSIS
+        If not elevated, relaunch this script with RunAs and return $true
+        (caller should return immediately). If already admin, return $false.
+        Safe with the menu: Launch-KitScript -Admin starts elevated already,
+        so this is a no-op and does not prompt twice.
+    #>
+    param(
+        [string[]]$ExtraArgs = @(),
+        [string]$CancelMessage = 'Elevation cancelled - nothing was changed.'
+    )
+    if (Test-IsAdmin) { return $false }
+
+    Write-Host "Elevating..." -ForegroundColor Cyan
+    $argList = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', ('"{0}"' -f $PSCommandPath))
+    if ($ExtraArgs -and $ExtraArgs.Count -gt 0) { $argList += $ExtraArgs }
+    try {
+        Start-Process powershell.exe -Verb RunAs -ArgumentList $argList
+    } catch {
+        Write-Host $CancelMessage -ForegroundColor Yellow
+    }
+    return $true
+}
+
+function Invoke-SystemHop {
+    <#
+        .SYNOPSIS
+        Create a one-shot schtasks job as SYSTEM/HIGHEST, run it, wait for
+        an optional result file, delete the task, return status + lines.
+
+        .DESCRIPTION
+        Shared by Start-Quiet (disable protected tasks) and Stop-Quiet
+        (re-enable them). Callers build the helper .ps1 and CommandLine;
+        this function owns the schtasks create/run/wait/delete pattern.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$TaskName,
+        [Parameter(Mandatory)][string]$CommandLine,
+        [string]$ResultFile,
+        [int]$TimeoutSeconds = 30,
+        [string]$ProgressActivity,
+        [string]$ProgressStatus,
+        [int]$ProgressPercentComplete = 55
+    )
+
+    if ($ResultFile -and (Test-Path $ResultFile)) {
+        Remove-Item $ResultFile -Force -ErrorAction SilentlyContinue
+    }
+
+    $createExit = $null
+    $runExit    = $null
+    $schedOk    = $true
+
+    & schtasks.exe /Create /TN $TaskName /TR $CommandLine /SC ONCE /ST 00:00 /RU SYSTEM /RL HIGHEST /F 2>&1 | Out-Null
+    $createExit = $LASTEXITCODE
+    if ($createExit -ne 0) { $schedOk = $false }
+
+    if ($schedOk) {
+        & schtasks.exe /Run /TN $TaskName 2>&1 | Out-Null
+        $runExit = $LASTEXITCODE
+        if ($runExit -ne 0) { $schedOk = $false }
+    }
+
+    # Poll every 100ms. Same ceiling as Start-Quiet; Stop used 1s sleeps.
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    while ($schedOk -and $ResultFile -and -not (Test-Path $ResultFile) -and $sw.Elapsed.TotalSeconds -lt $TimeoutSeconds) {
+        if ($ProgressActivity) {
+            Write-Progress -Activity $ProgressActivity `
+                           -Status $ProgressStatus `
+                           -CurrentOperation ("waited {0:N1}s of {1}" -f $sw.Elapsed.TotalSeconds, $TimeoutSeconds) `
+                           -PercentComplete $ProgressPercentComplete
+        }
+        Start-Sleep -Milliseconds 100
+    }
+    $sw.Stop()
+    if ($ProgressActivity) { Write-Progress -Activity $ProgressActivity -Completed }
+
+    & schtasks.exe /Delete /TN $TaskName /F 2>&1 | Out-Null
+
+    $lines = @()
+    $reported = $false
+    if ($ResultFile -and (Test-Path $ResultFile)) {
+        $reported = $true
+        $lines = @(Get-Content $ResultFile)
+        Remove-Item $ResultFile -Force -ErrorAction SilentlyContinue
+    }
+
+    return [pscustomobject]@{
+        SchedOk    = $schedOk
+        CreateExit = $createExit
+        RunExit    = $runExit
+        Lines      = $lines
+        Reported   = $reported
+    }
 }
 
 # ================================================================

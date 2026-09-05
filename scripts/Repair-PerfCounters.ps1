@@ -10,8 +10,13 @@
     RUN AS ADMINISTRATOR, then REBOOT.
 #>
 
-$admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $admin) { Write-Host "ERROR: Run as Administrator." -ForegroundColor Red; return }
+$common = Join-Path $PSScriptRoot 'Kit-Common.ps1'
+if (-not (Test-Path $common)) {
+    Write-Host "ERROR: scripts\Kit-Common.ps1 is missing - re-unzip the kit." -ForegroundColor Red
+    return
+}
+. $common
+if (Request-AdminRelaunch) { return }
 
 Write-Host "Rebuilding performance counter registry (64-bit)..." -ForegroundColor Cyan
 & "$env:windir\system32\lodctr.exe" /R

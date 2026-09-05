@@ -1,10 +1,14 @@
-$src = Get-Content "$PSScriptRoot/../QuietWindows-Menu.ps1" -Raw
+﻿$menuSrc = Get-Content "$PSScriptRoot/../QuietWindows-Menu.ps1" -Raw
+$xamlPath = "$PSScriptRoot/../ui/MainWindow.xaml"
 
-# pull the here-string that holds the XAML
-$start = $src.IndexOf('$XAML = @"')
-$end   = $src.IndexOf('"@', $start)
-if ($start -lt 0 -or $end -lt 0) { "FAIL: could not locate XAML block"; exit 1 }
-$xamlText = $src.Substring($start + '$XAML = @"'.Length, $end - $start - '$XAML = @"'.Length)
+if (-not (Test-Path $xamlPath)) { "FAIL: ui\MainWindow.xaml missing"; exit 1 }
+$xamlText = Get-Content $xamlPath -Raw
+
+# Menu must load XAML from the external file, not an inline here-string
+if ($menuSrc -match '\$XAML\s*=\s*@"') { "FAIL: QuietWindows-Menu.ps1 still has an inline XAML here-string"; exit 1 }
+if ($menuSrc -notmatch 'ui\\MainWindow\.xaml') { "FAIL: QuietWindows-Menu.ps1 does not reference ui\MainWindow.xaml"; exit 1 }
+if ($menuSrc -notmatch 'Get-Content\s+-Path\s+\$xamlPath\s+-Raw') { "FAIL: QuietWindows-Menu.ps1 does not load XAML with Get-Content -Raw"; exit 1 }
+"OK: menu loads XAML from ui\MainWindow.xaml"
 
 try { [xml]$x = $xamlText } catch { "FAIL: XAML is not well-formed XML -> $_"; exit 1 }
 "OK: XAML is well-formed XML"
@@ -21,7 +25,7 @@ foreach ($n in $x.SelectNodes("//*")) {
 
 # every FindName("X") in the script must resolve
 $missing = @()
-foreach ($m in [regex]::Matches($src, 'FindName\("([^"]+)"\)')) {
+foreach ($m in [regex]::Matches($menuSrc, 'FindName\("([^"]+)"\)')) {
     $n = $m.Groups[1].Value
     if (-not $names.ContainsKey($n)) { $missing += $n }
 }
@@ -39,7 +43,7 @@ foreach ($p in $pageList) {
 "OK: all $($pageList.Count) pages present"
 
 # every page name the script hands to Show-Page must be one of them
-foreach ($m in [regex]::Matches($src, "Show-Page\s+'([^']+)'")) {
+foreach ($m in [regex]::Matches($menuSrc, "Show-Page\s+'([^']+)'")) {
     if ($pageList -notcontains $m.Groups[1].Value) {
         "FAIL: Show-Page '$($m.Groups[1].Value)' names a page that does not exist"; exit 1
     }
@@ -59,8 +63,8 @@ foreach ($n in 'PanelExtras','TxtExtrasEmpty') {
 "OK: Extras page is complete"
 
 # no orphaned handlers left over from the old Reset button
-if ($src -match 'BtnReset') { "FAIL: stale BtnReset reference still in script"; exit 1 }
-if ($src -match 'Detect-System|Load-Config|Save-Config') { "FAIL: stale detection function reference"; exit 1 }
+if ($menuSrc -match 'BtnReset') { "FAIL: stale BtnReset reference still in script"; exit 1 }
+if ($menuSrc -match 'Detect-System|Load-Config|Save-Config') { "FAIL: stale detection function reference"; exit 1 }
 "OK: no stale references to the old detection code"
 
 # --- v3.3.0: the hard-fault button -------------------------------------
@@ -74,18 +78,18 @@ foreach ($btn in 'BtnRecord','BtnRecordHF') {
 }
 "OK: both Record-Session buttons present"
 
-if ($src -notmatch 'FindName\("BtnRecord"\)\.Add_Click')   { "FAIL: BtnRecord has no click handler";   exit 1 }
-if ($src -notmatch 'FindName\("BtnRecordHF"\)\.Add_Click') { "FAIL: BtnRecordHF has no click handler"; exit 1 }
+if ($menuSrc -notmatch 'FindName\("BtnRecord"\)\.Add_Click')   { "FAIL: BtnRecord has no click handler";   exit 1 }
+if ($menuSrc -notmatch 'FindName\("BtnRecordHF"\)\.Add_Click') { "FAIL: BtnRecordHF has no click handler"; exit 1 }
 "OK: both Record-Session buttons are wired"
 
 # the plain button must stay non-elevated - that is the kit's
 # "no admin needed" promise for the read-only tracer
-$plain = [regex]::Match($src, 'FindName\("BtnRecord"\)\.Add_Click\(\{([^}]*)\}')
+$plain = [regex]::Match($menuSrc, 'FindName\("BtnRecord"\)\.Add_Click\(\{([^}]*)\}')
 if (-not $plain.Success)            { "FAIL: could not read BtnRecord handler"; exit 1 }
 if ($plain.Groups[1].Value -match '-Admin') { "FAIL: the plain Run button now elevates - read-only path lost"; exit 1 }
 "OK: plain Run button is still non-elevated"
 
-$hf = [regex]::Match($src, 'FindName\("BtnRecordHF"\)\.Add_Click\(\{([^}]*)\}')
+$hf = [regex]::Match($menuSrc, 'FindName\("BtnRecordHF"\)\.Add_Click\(\{([^}]*)\}')
 if (-not $hf.Success)                        { "FAIL: could not read BtnRecordHF handler"; exit 1 }
 if ($hf.Groups[1].Value -notmatch '-Admin')  { "FAIL: hard-fault button does not elevate - it will never trace"; exit 1 }
 if ($hf.Groups[1].Value -notmatch 'Record-Session\.ps1') { "FAIL: hard-fault button does not launch Record-Session.ps1"; exit 1 }

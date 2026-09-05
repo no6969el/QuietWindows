@@ -1,13 +1,15 @@
 QUIETWINDOWS  -  what each file in here does
 =============================================================
 
-YOU PROBABLY DON'T NEED THIS FILE.
+YOU USUALLY WANT THE MENU, NOT THESE FILES.
 
-Double-click QuietWindows.bat (one folder up) and use the menu. It runs
-everything below for you, in the right order, with an explanation on
-every button. In a hurry? Optimize-My-PC.bat does the lot in one go.
+Double-click QuietWindows.bat (one folder up). It runs everything below
+for you, in the right order, with an explanation on every button.
+
+In a hurry? Optimize-My-PC.bat does the one-time setup with no menu.
 
 This file is for people who want to run things by hand.
+
 
 To run one by hand:
    powershell -ExecutionPolicy Bypass -File "<path to the .ps1>"
@@ -15,10 +17,9 @@ To run one by hand:
 Or run Create-Launchers.ps1 once to get a double-clickable shortcut
 next to each of these.
 
-Anything marked (PERMISSION) changes a Windows setting, so Windows will
-ask you to allow it. Run those from a PowerShell you opened with
-"Run as administrator", or just use the menu, which handles it.
-
+Anything marked (PERMISSION) changes a Windows setting. Those scripts
+self-elevate (same helper as Start/Stop), or use the menu, which
+already launches them elevated - either way Windows asks once.
 
 -------------------------------------------------------------
 WHAT'S A GAME?          (nothing to edit)
@@ -46,8 +47,19 @@ CPU-Profile.ps1
 
 Kit-Common.ps1
       The one list of what gets quieted: which Windows services and
-      which scheduled jobs. Four scripts read it, so this is the single
-      place to edit if you want to trim the list. Not run directly.
+      which scheduled jobs. Also shared helpers (logging, elevation:
+      Test-IsAdmin / Request-AdminRelaunch). Four scripts read the
+      quiet lists; tweak scripts may load it just for elevation.
+      Not run directly.
+
+
+-------------------------------------------------------------
+FOR CONTRIBUTORS
+-------------------------------------------------------------
+The guided menu UI lives one folder up:
+   ui\MainWindow.xaml
+QuietWindows-Menu.ps1 loads that markup. End users do not need to
+open it - edit it only when changing button layout or labels.
 
 
 -------------------------------------------------------------
@@ -256,3 +268,4 @@ stale answer behind.
 
 These scripts change Windows, registry and power settings. Every one is
 reversible, but read before you run them on somebody else's PC.
+

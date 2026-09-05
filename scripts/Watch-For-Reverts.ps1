@@ -1,5 +1,5 @@
 <#
-    Watch-For-Reverts.ps1                                    v1.0.3
+    Watch-For-Reverts.ps1                                    v1.0.4
     ================================================================
     READ-ONLY forensics. Answers one question:
 
@@ -63,7 +63,7 @@ $TaskPattern  = Get-QuietTaskPathPattern
 $out = New-Object System.Collections.ArrayList
 function Say { param($t,$c='Gray') Write-Host $t -ForegroundColor $c; [void]$out.Add($t) }
 
-$admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+$admin = Test-IsAdmin
 
 Say ""
 Say "  ==========  WHAT UNDID THE QUIET?  ==========" 'Cyan'

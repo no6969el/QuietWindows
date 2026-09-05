@@ -1,20 +1,18 @@
 <#
-    Optimize-My-PC.ps1  -  do everything, once
+    Optimize-My-PC.ps1  -  one-shot setup (no menu)
     ---------------------------------------------------------------
-    For people who just want their PC quieted down and do not want to
-    read anything. It applies every safe fix in one go, behind a
-    single Windows permission prompt.
+    Same one-time setup as the big green "QUIET MY PC DOWN" button,
+    without the guided menu. One Windows permission prompt, then
+    restart when it tells you to.
 
-    Double-click Optimize-My-PC.bat, or right-click this file and
-    choose "Run with PowerShell".
+    Double-click Optimize-My-PC.bat (or right-click this file ->
+    Run with PowerShell).
 
-    Want it explained step by step, with an Undo for each piece?
-    Use QuietWindows.bat instead - same fixes, more hand-holding.
+    Prefer buttons and Undo for each piece? Use QuietWindows.bat
+    instead - START-HERE.txt has the short path.
 
-    It works out what your processor can and cannot do on its own.
-    On AMD chips with the extra cache it can also steer interrupts
-    away from your game's cores; on anything else it quietly skips
-    that part rather than guessing.
+    Detects your CPU and skips interrupt steering when it does not
+    apply (non-X3D, unknown topology) rather than guessing.
 #>
 
 # Cosmetic only: keeps probe noise out of a window aimed at non-readers.

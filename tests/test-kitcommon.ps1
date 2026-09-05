@@ -108,6 +108,26 @@ $ft = Get-Content (Join-Path $scripts 'Record-Session.ps1') -Raw
 Check ($ft -match 'Find-Xperf') "Record-Session prefers the shared Find-Xperf"
 Check ($ft -match '\$HardFaultProviders') "Record-Session uses the shared provider string"
 
+
+"--- Kit-Common exposes shared helpers ---"
+foreach ($fn in 'Write-Log','Initialize-Privileges','Test-IsAdmin','Request-AdminRelaunch','Invoke-SystemHop') {
+    Check ($null -ne (Get-Command $fn -ErrorAction SilentlyContinue)) "$fn is defined"
+}
+Check ((Test-IsAdmin) -is [bool]) "Test-IsAdmin returns a boolean"
+foreach ($v in 'StateDir','StateFile','LogFile','SvcRoot') {
+    Check ($null -ne (Get-Variable -Name $v -ErrorAction SilentlyContinue)) "$v is defined"
+}
+
+"--- Start/Stop no longer keep private copies of shared helpers ---"
+foreach ($n in 'Start-Quiet.ps1','Stop-Quiet.ps1') {
+    $c = Get-Content (Join-Path $scripts $n) -Raw
+    Check ($c -notmatch '(?m)^function Write-Log\b') "$n does not define function Write-Log"
+    Check ($c -notmatch '(?m)^function Initialize-Privileges\b') "$n does not define function Initialize-Privileges"
+    Check ($c -match 'Request-AdminRelaunch') "$n uses Request-AdminRelaunch"
+    Check ($c -match 'Invoke-SystemHop') "$n uses Invoke-SystemHop"
+}
+
+
 ""
 if ($fail) { "RESULT: $fail assertion(s) failed"; exit 1 }
 "RESULT: all assertions passed"

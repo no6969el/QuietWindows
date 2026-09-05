@@ -1,35 +1,15 @@
 <#
     CPU-Profile.ps1  -  shared CPU topology resolver
     ================================================================
-    SINGLE SOURCE OF TRUTH. Every other script dot-sources this:
+    SINGLE SOURCE OF TRUTH. Dot-source, then:  $P = Get-CpuProfile
 
-        . (Join-Path $PSScriptRoot 'CPU-Profile.ps1')
-        $P = Get-CpuProfile
+    Resolves topology most-reliable-first: CPU name catalog -> L3 cache
+    layout -> total L3 size -> core-count heuristic. Always validated
+    against the CPUs Windows reports.
 
-    Replaces the old "guess from core count" logic that lived in six
-    places and disagreed with itself. Resolves topology in four layers,
-    most reliable first:
-
-      1. CPU name  -> catalog lookup (all 17 X3D SKUs, below)
-      2. L3 cache topology via GetLogicalProcessorInformationEx
-         (finds real CCD boundaries + which CCDs carry V-Cache, so
-         chips AMD hasn't shipped yet still resolve correctly)
-      3. Total L3 size from WMI (cheap X3D / non-X3D discriminator)
-      4. Core-count heuristic (last resort)
-
-    Everything is validated against the CPUs Windows actually reports,
-    so a target core can never point at a processor that doesn't exist.
-
-    TESTING
-    -------
-    Set QW_FORCE_PROFILE to any model in the catalog to make the whole
-    kit behave as if it were running on that chip:
-
-        $env:QW_FORCE_PROFILE = '5600X3D'
-
-    Scripts that write to the registry detect your gameulated profile and
-    run in DRY-RUN mode instead - nothing is changed. Unset the variable
-    (or close the window) to go back to real detection.
+    Testing: set QW_FORCE_PROFILE to a catalog model (e.g. 5600X3D) to
+    pretend that chip. Registry writers detect a simulated profile and
+    dry-run instead. Unset (or close the window) for real detection.
 #>
 
 # Bump this when the shape of config.json changes. Saved configs with an

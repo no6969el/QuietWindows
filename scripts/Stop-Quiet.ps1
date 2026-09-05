@@ -1,36 +1,24 @@
 <#
-    Stop-Quiet.ps1  -  MEDIC-UNLOCK EDITION            v1.0.3
+    Stop-Quiet.ps1  -  wake Windows back up after a quiet session   v1.0.4
     ================================================================
-    Puts everything Start-Quiet touched back exactly as it was.
+    Puts everything Start-Quiet.ps1 touched back exactly as it was,
+    by replaying the snapshot. Required - quiet mode does not undo
+    itself on reboot.
 
-    This is NOT optional. Start-Quiet disables services rather than
-    stopping them, so nothing self-heals on reboot. Until this runs, the
-    machine has no Windows Update - and because Defender signature updates
-    ride on wuauserv/BITS, no fresh virus definitions either.
+    Until this runs, the machine has no Windows Update and (because
+    Defender signatures ride the same services) no fresh definitions.
 
-    It replays the snapshot written by Start-Quiet, so anything you had
-    already turned off yourself STAYS off. If Defender real-time was already
-    disabled before you raced, it is left disabled.
-
-    If no snapshot exists (someone deleted it, or quieting was done by hand)
-    it falls back to Windows defaults and says so loudly.
-
-    PAIRED WITH THE MEDIC-UNLOCK EDITION
-    ------------------------------------
-    That edition may have taken ownership of the WaaSMedicSvc registry key.
-    This script restores the original security descriptor and owner, verifies
-    both, and REFUSES to delete the snapshot while any key is still
-    unrestored - so a partial restore can't be silently forgotten. If it
-    cannot finish, it prints the exact commands to fix it by hand.
-
-    Identical to the standard edition otherwise. Either one restores either
-    kind of session correctly.
+    If no snapshot exists, falls back to Windows defaults and says so.
+    Also restores Medic registry ownership/permissions when Start-Quiet
+    had unlocked them, and refuses to delete the snapshot while any key
+    is still unrestored.
 
     USAGE
-      .\Stop-Quiet.ps1              normal run
-      .\Stop-Quiet.ps1 -Verify      re-check after 30s that it held
+      .\Stop-Quiet.ps1              normal restore
+      .\Stop-Quiet.ps1 -Verify      re-check after a short wait that it held
 
-    Self-elevates.
+    Self-elevates. Shared lists/helpers: Kit-Common.ps1.
+    History: see CHANGELOG.md / README.md in the kit root.
 #>
 
 [CmdletBinding()]
@@ -39,14 +27,11 @@ param(
     [int]   $VerifyDelay = 30
 )
 
-$StateDir  = Join-Path ([Environment]::GetFolderPath('CommonApplicationData')) 'QuietWindows'
-$StateFile = Join-Path $StateDir 'state.json'
-$LogFile   = Join-Path $StateDir 'QuietWindows.log'
-$SvcRoot   = 'HKLM:\SYSTEM\CurrentControlSet\Services'
-
 # The service list, the task list and the fallback startup types all come
 # from Kit-Common.ps1, which Start-Quiet reads too. Nothing to keep in
-# step by hand - edit them there.
+# step by hand - edit them there. Also provides $StateDir/$StateFile/
+# $LogFile/$SvcRoot, Write-Log, Initialize-Privileges, Request-AdminRelaunch,
+# Invoke-SystemHop.
 $common = Join-Path $PSScriptRoot 'Kit-Common.ps1'
 if (-not (Test-Path $common)) {
     Write-Host ""
@@ -56,60 +41,17 @@ if (-not (Test-Path $common)) {
     return
 }
 . $common
-# Provides: $KitVersion, $ServicesToQuiet, $TasksToDisable, $ServiceDefaults
+# Provides: $KitVersion, $ServicesToQuiet, $TasksToDisable, $ServiceDefaults,
+#           shared paths + Write-Log / Initialize-Privileges /
+#           Request-AdminRelaunch / Invoke-SystemHop
 
 # Windows defaults, used only when there is no snapshot to replay.
 $Defaults = $ServiceDefaults
 
-function Write-Log {
-    param([string]$Msg, [string]$Color = 'Gray', [switch]$NoHost)
-    $line = ("{0}  {1}" -f ([DateTime]::Now.ToString('yyyy-MM-dd HH:mm:ss', [Globalization.CultureInfo]::InvariantCulture)), $Msg)
-    try {
-        if (-not (Test-Path $StateDir)) { New-Item -ItemType Directory -Path $StateDir -Force | Out-Null }
-        Add-Content -Path $LogFile -Value $line -Encoding utf8 -ErrorAction SilentlyContinue
-    } catch { }
-    if (-not $NoHost) { Write-Host ("  " + $Msg) -ForegroundColor $Color }
-}
-
-
-function Initialize-Privileges {
-    if ('RQPriv' -as [type]) { return $true }
-    $code = @'
-using System;
-using System.Runtime.InteropServices;
-public class RQPriv {
-    [DllImport("advapi32.dll", SetLastError=true)]
-    static extern bool OpenProcessToken(IntPtr h, uint acc, out IntPtr tok);
-    [DllImport("advapi32.dll", SetLastError=true)]
-    static extern bool LookupPrivilegeValue(string host, string name, out long luid);
-    [DllImport("advapi32.dll", SetLastError=true)]
-    static extern bool AdjustTokenPrivileges(IntPtr tok, bool disall, ref TOKPRIV1LUID newst, int len, IntPtr prev, IntPtr rel);
-    [StructLayout(LayoutKind.Sequential, Pack=1)]
-    public struct TOKPRIV1LUID { public int Count; public long Luid; public int Attr; }
-    public static bool Enable(string priv) {
-        IntPtr tok = IntPtr.Zero;
-        if (!OpenProcessToken(System.Diagnostics.Process.GetCurrentProcess().Handle, 0x28, out tok)) return false;
-        TOKPRIV1LUID tp;
-        tp.Count = 1;
-        tp.Luid  = 0;
-        tp.Attr  = 2;
-        if (!LookupPrivilegeValue(null, priv, out tp.Luid)) return false;
-        return AdjustTokenPrivileges(tok, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
-    }
-}
-'@
-    try { Add-Type -TypeDefinition $code -ErrorAction Stop } catch { return $false }
-    return $true
-}
-
 # ---- self-elevate -------------------------------------------------
-$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $isAdmin) {
-    Write-Host "Elevating..." -ForegroundColor Cyan
-    $argList = @('-NoProfile','-ExecutionPolicy','Bypass','-File', ('"{0}"' -f $PSCommandPath))
-    if ($Verify) { $argList += @('-Verify','-VerifyDelay',$VerifyDelay) }
-    try   { Start-Process powershell.exe -Verb RunAs -ArgumentList $argList }
-    catch { Write-Host "Elevation cancelled - nothing was restored." -ForegroundColor Yellow }
+$elevateArgs = @()
+if ($Verify) { $elevateArgs += @('-Verify','-VerifyDelay',$VerifyDelay) }
+if (Request-AdminRelaunch -ExtraArgs $elevateArgs -CancelMessage 'Elevation cancelled - nothing was restored.') {
     return
 }
 
@@ -318,7 +260,6 @@ if ($failedTasks.Count -gt 0) {
     if (-not (Test-Path $StateDir)) { New-Item -ItemType Directory -Path $StateDir -Force | Out-Null }
     $helper = Join-Path $StateDir 'system-hop-restore.ps1'
     $marker = Join-Path $StateDir 'system-hop-restore.done'
-    if (Test-Path $marker) { Remove-Item $marker -Force -ErrorAction SilentlyContinue }
 
     $lines = @('$done = @()')
     foreach ($f in $failedTasks) {
@@ -331,23 +272,19 @@ if ($failedTasks.Count -gt 0) {
     Set-Content -Path $helper -Value $lines -Encoding utf8
 
     $cmd = ('powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{0}"' -f $helper)
-    & schtasks.exe /Create /TN 'QuietWindows-SystemHopRestore' /TR $cmd /SC ONCE /ST 00:00 /RU SYSTEM /RL HIGHEST /F 2>&1 | Out-Null
-    & schtasks.exe /Run /TN 'QuietWindows-SystemHopRestore' 2>&1 | Out-Null
-    $waited = 0
-    while (-not (Test-Path $marker) -and $waited -lt 30) { Start-Sleep -Seconds 1; $waited++ }
-    & schtasks.exe /Delete /TN 'QuietWindows-SystemHopRestore' /F 2>&1 | Out-Null
-
-    if (Test-Path $marker) {
-        foreach ($l in (Get-Content $marker)) {
+    $hop = Invoke-SystemHop -TaskName 'QuietWindows-SystemHopRestore' `
+                            -CommandLine $cmd `
+                            -ResultFile $marker `
+                            -TimeoutSeconds 30
+    if ($hop.Reported) {
+        foreach ($l in $hop.Lines) {
             if ($l -like 'OK*') { Write-Log ("SYSTEM " + $l) 'Green' } else { Write-Log ("SYSTEM " + $l) 'Yellow' }
         }
-        Remove-Item $marker -Force -ErrorAction SilentlyContinue
     } else {
         Write-Log "SYSTEM helper did not report back - re-run this script from an elevated prompt" 'Yellow'
     }
     Remove-Item $helper -Force -ErrorAction SilentlyContinue
 }
-
 # ================================================================
 #  3. DEFENDER
 # ================================================================
