@@ -73,10 +73,11 @@ Not deployed. Releases are published on GitHub (v1.0.0 to v1.0.4 so far). From
 1. Bump `$KitVersion` in `scripts/Kit-Common.ps1`; it is the authoritative version.
 2. Stamp the banner at the top of each script to match.
 3. Add the release to `CHANGELOG.md`.
-4. Publish the GitHub release.
+4. Zip the player files by hand as `QuietWindows-vX.Y.Z.zip`. Leave out `docs/`,
+   `tests/`, `AGENTS.md` and `CLAUDE.md`; players don't need them.
+5. Publish the GitHub release with that zip attached.
 
-The exact packaging step (zip contents) is an open question in
-[known-issues.md](known-issues.md).
+There is no packaging script; the zip is made by hand.
 
 ## Configuration
 
