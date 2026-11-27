@@ -28,7 +28,9 @@ Step-by-step walkthrough (written for normal people): **[HOW-TO.md](HOW-TO.md)**
 ## Safety (read this)
 
 - Nothing runs until you press a button. Every change has an Undo.
-- Your antivirus stays on. It just stops re-scanning your game folders.
+- While Windows is quieted, your antivirus's live scanning is paused. Waking
+  Windows back up turns it on again. Your game folders stay skipped by scans
+  either way. Want the antivirus left alone? Use `-SkipDefender` (see HOW-TO).
 - **You must press Wake Windows back up after playing.** Until you do,
   Windows Update is off (and fresh antivirus definitions ride the same
   services). Forgetful? Use `-Deadman` so the next restart puts everything

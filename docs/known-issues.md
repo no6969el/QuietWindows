@@ -15,7 +15,6 @@ This doc lists what is known to be wrong, limited or undecided.
 
 | Issue | Kind | Severity | Where |
 | --- | --- | --- | --- |
-| README.md says "Your antivirus stays on", but Start-Quiet turns Defender real-time protection off for the session unless `-SkipDefender` (scripts/README.txt says so) | bug (docs) | high | `README.md`, `scripts/Start-Quiet.ps1` section 4 |
 | CLAUDE.md says the repo is private until published; GitHub shows it public with five releases | debt (docs) | medium | `CLAUDE.md` |
 | CHANGELOG.md 1.0.3 section and its lineage note show garbled dashes (`â€”`), UTF-8 read as Windows-1252 | debt | low | `CHANGELOG.md` |
 | `-NoSystem` switch is not in HOW-TO.md or scripts/README.txt | debt (docs) | low | `scripts/Start-Quiet.ps1` |
@@ -35,13 +34,11 @@ None found.
 
 Answer any of these and the next run turns the answer into docs.
 
-1. Which is intended for Defender during a quiet session: real-time paused (what the
-   code does) or left on (what README.md says)? Owner.
-2. Is the repo public now, and should CLAUDE.md's "private until published" line
+1. Is the repo public now, and should CLAUDE.md's "private until published" line
    change? Owner.
-3. Where does the v4.0.0 spec live, and should the docs point to it? Owner.
-4. How are the tests run in practice (pwsh on Windows, on Linux, or both)? Owner.
-5. What goes into a release: the GitHub source zip, or a hand-made zip? Should `docs/`,
+2. Where does the v4.0.0 spec live, and should the docs point to it? Owner.
+3. How are the tests run in practice (pwsh on Windows, on Linux, or both)? Owner.
+4. What goes into a release: the GitHub source zip, or a hand-made zip? Should `docs/`,
    `tests/`, `AGENTS.md` and `CLAUDE.md` ship to players? Owner.
-6. Is the iRacing X3D Tuning Kit retired in favour of QuietWindows? Owner.
-7. Is `-NoSystem` meant for players, or a developer switch only? Owner.
+5. Is the iRacing X3D Tuning Kit retired in favour of QuietWindows? Owner.
+6. Is `-NoSystem` meant for players, or a developer switch only? Owner.

@@ -37,7 +37,8 @@ Start-Quiet (`scripts/Start-Quiet.ps1`), numbered as in the script:
    recovery actions, then stops it with `Stop-ServiceBounded` (20-second limit).
 4. **Defender.** Turns real-time monitoring off for the session with
    `Set-MpPreference`, unless `-SkipDefender` or it was already off. Fails when Tamper
-   Protection is on, and says so.
+   Protection is on, and says so. This is intended (see
+   [ADR 0006](../adr/0006-pause-defender-real-time-during-a-quiet-session.md)).
    4b. **Store auto-download.** Sets the `AutoDownload = 2` policy under
    `HKLM:\SOFTWARE\Policies\Microsoft\WindowsStore`; the original goes to
    `storepolicy.json`. `-KeepStore` skips it.
@@ -104,6 +105,6 @@ real-time, the Store policy and, with `-Deadman`, one scheduled task. See
 
 ## Related
 
-- [ADR 0001](../adr/0001-one-shared-quiet-list.md), [ADR 0002](../adr/0002-disable-services-and-replay-a-snapshot.md)
+- [ADR 0001](../adr/0001-one-shared-quiet-list.md), [ADR 0002](../adr/0002-disable-services-and-replay-a-snapshot.md), [ADR 0006](../adr/0006-pause-defender-real-time-during-a-quiet-session.md)
 - Glossary: **Quiet**, **Wake**, **Snapshot**, **Re-quiet**, **Deadman**, **Medic unlock**, **SYSTEM hop**
 - [health-checks.md](health-checks.md)

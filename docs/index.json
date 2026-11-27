@@ -14,8 +14,8 @@
     "repo": "github.com/no6969el/quietwindows"
   },
   "generated": {
-    "at": "2026-11-27T18:30:40Z",
-    "commit": "51ef0b7"
+    "at": "2026-11-27T19:06:09Z",
+    "commit": "48ed4d6"
   },
   "docs": [
     {
@@ -391,6 +391,21 @@
       ]
     },
     {
+      "id": "adr-0006",
+      "kind": "adr",
+      "title": "ADR 0006: Pause Defender real-time scanning during a quiet session",
+      "path": "docs/adr/0006-pause-defender-real-time-during-a-quiet-session.md",
+      "summary": "Start-Quiet pauses Defender real-time protection for the session and Stop-Quiet turns it back on; -SkipDefender leaves it alone.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "scripts/Start-Quiet.ps1",
+        "scripts/Stop-Quiet.ps1",
+        "README.md"
+      ]
+    },
+    {
       "id": "how-to-add-an-extras-folder",
       "kind": "how-to",
       "title": "Add an Extras folder for a game",
@@ -519,6 +534,13 @@
       "status": "accepted",
       "date": "2026-09-04",
       "path": "docs/adr/0005-menu-layout-in-its-own-xaml-file.md"
+    },
+    {
+      "id": "0006",
+      "title": "ADR 0006: Pause Defender real-time scanning during a quiet session",
+      "status": "accepted",
+      "date": "2026-11-27",
+      "path": "docs/adr/0006-pause-defender-real-time-during-a-quiet-session.md"
     }
   ],
   "glossary": {
@@ -527,8 +549,8 @@
   },
   "known_issues": {
     "path": "docs/known-issues.md",
-    "open": 11,
-    "open_questions": 7
+    "open": 10,
+    "open_questions": 6
   },
   "health": {
     "stale_docs": 0,
