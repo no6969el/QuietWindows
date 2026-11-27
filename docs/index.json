@@ -1,0 +1,559 @@
+{
+  "standard": "project-docs",
+  "standard_version": "0.1",
+  "project": {
+    "name": "QuietWindows",
+    "slug": "quietwindows",
+    "summary": "Quiet Windows down so your games get the whole PC: PowerShell scripts and a menu that hold background Windows work while you play and restore it after.",
+    "status": "active",
+    "stack": [
+      "PowerShell 5.1",
+      "WPF/XAML",
+      "Windows 10/11"
+    ],
+    "repo": "github.com/no6969el/quietwindows"
+  },
+  "generated": {
+    "at": "2026-11-27T22:06:25Z",
+    "commit": "08d15d7"
+  },
+  "docs": [
+    {
+      "id": "overview",
+      "kind": "overview",
+      "title": "Overview",
+      "path": "docs/overview.md",
+      "summary": "Windows PowerShell scripts with a click-through menu that put background Windows work on hold while you play, then hand it all back.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "README.md",
+        "HOW-TO.md",
+        "CHANGELOG.md",
+        "scripts/Kit-Common.ps1"
+      ]
+    },
+    {
+      "id": "architecture",
+      "kind": "architecture",
+      "title": "Architecture",
+      "path": "docs/architecture.md",
+      "summary": "Two front ends (menu and one-shot setup) driving one folder of PowerShell scripts that share three libraries.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "QuietWindows-Menu.ps1",
+        "Optimize-My-PC.ps1",
+        "ui/MainWindow.xaml",
+        "scripts/",
+        "extras/"
+      ]
+    },
+    {
+      "id": "map",
+      "kind": "map",
+      "title": "Code map",
+      "path": "docs/map.md",
+      "summary": "Where every script, page and test lives, and where to look to change something.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "QuietWindows.bat",
+        "QuietWindows-Menu.ps1",
+        "Optimize-My-PC.bat",
+        "Optimize-My-PC.ps1",
+        "scripts/",
+        "ui/",
+        "extras/",
+        "tests/"
+      ]
+    },
+    {
+      "id": "cpu-detection",
+      "kind": "feature",
+      "title": "CPU detection",
+      "path": "docs/features/cpu-detection.md",
+      "summary": "Works out which AMD X3D chip (if any) the PC has, where its big cache is, and which cores are safe for interrupts; never guesses.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "scripts/CPU-Profile.ps1",
+        "QuietWindows-Menu.ps1",
+        "Optimize-My-PC.ps1",
+        "tests/test-profiles.ps1",
+        "tests/test-integration.ps1",
+        "tests/bench-startup.ps1"
+      ]
+    },
+    {
+      "id": "extras",
+      "kind": "feature",
+      "title": "Extras (per-game fixes)",
+      "path": "docs/features/extras.md",
+      "summary": "Drop a folder into extras/ and each .ps1 in it becomes a button on the Extras page; iRacing ships as the first one.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "extras/",
+        "QuietWindows-Menu.ps1"
+      ]
+    },
+    {
+      "id": "game-library",
+      "kind": "feature",
+      "title": "Games list (My Games)",
+      "path": "docs/features/game-library.md",
+      "summary": "One saved list of the games on this PC, found from store folders or added by hand, used for Defender exclusions and stutter hunting.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "scripts/Game-Library.ps1",
+        "scripts/Add-Defender-Exclusions.ps1",
+        "QuietWindows-Menu.ps1",
+        "extras/iRacing/Add-iRacing-To-My-Games.ps1"
+      ]
+    },
+    {
+      "id": "health-checks",
+      "kind": "feature",
+      "title": "Checks and diagnostics",
+      "path": "docs/features/health-checks.md",
+      "summary": "Read-only tools that say whether setup took, whether you are quieted, what reverted, timer behaviour, and CPU undervolt stability.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "scripts/Ready-Check.ps1",
+        "scripts/Check-Quiet-Status.ps1",
+        "scripts/Watch-For-Reverts.ps1",
+        "scripts/Watch-TimerResolution.ps1",
+        "scripts/Test-UndervoltStability.ps1",
+        "scripts/Create-Launchers.ps1"
+      ]
+    },
+    {
+      "id": "interrupt-steering",
+      "kind": "feature",
+      "title": "Interrupt steering (GPU, NIC and USB)",
+      "path": "docs/features/interrupt-steering.md",
+      "summary": "Moves graphics-card, network and USB interrupts off the game's cores using the Windows interrupt-affinity policy; reversible.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "scripts/Set-GPU-IRQ-Affinity.ps1",
+        "scripts/Undo-GPU-IRQ-Affinity.ps1",
+        "scripts/Set-NIC-USB-IRQ-Affinity.ps1",
+        "scripts/Undo-NIC-USB-IRQ-Affinity.ps1",
+        "scripts/CPU-Profile.ps1"
+      ]
+    },
+    {
+      "id": "menu",
+      "kind": "feature",
+      "title": "The dashboard (QuietWindows-Menu)",
+      "path": "docs/features/menu.md",
+      "summary": "A WPF window of plain-language buttons that runs every script in its own window, elevated only when needed.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "QuietWindows.bat",
+        "QuietWindows-Menu.ps1",
+        "ui/MainWindow.xaml",
+        "tests/test-xaml.ps1"
+      ]
+    },
+    {
+      "id": "one-time-setup",
+      "kind": "feature",
+      "title": "One-time setup (the green button and Optimize-My-PC)",
+      "path": "docs/features/one-time-setup.md",
+      "summary": "Applies the lasting fixes once (Defender exclusions, USB and Game Bar, task log, smooth timer, GPU interrupts), then asks for a restart.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "Optimize-My-PC.ps1",
+        "Optimize-My-PC.bat",
+        "QuietWindows-Menu.ps1",
+        "scripts/Add-Defender-Exclusions.ps1",
+        "scripts/Apply-Extra-Tweaks.ps1",
+        "scripts/Undo-Extra-Tweaks.ps1",
+        "scripts/Enable-DiagnosticLogs.ps1",
+        "scripts/Enable-SmoothTimer.ps1",
+        "scripts/Undo-SmoothTimer.ps1"
+      ]
+    },
+    {
+      "id": "quiet-session",
+      "kind": "feature",
+      "title": "Quiet session (Start-Quiet and Stop-Quiet)",
+      "path": "docs/features/quiet-session.md",
+      "summary": "Puts Windows Update, Search, Store updates and background jobs on hold for a game, then puts everything back from a snapshot.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "scripts/Start-Quiet.ps1",
+        "scripts/Stop-Quiet.ps1",
+        "scripts/Kit-Common.ps1",
+        "scripts/Check-Quiet-Status.ps1",
+        "scripts/Watch-For-Reverts.ps1"
+      ]
+    },
+    {
+      "id": "stutter-finder",
+      "kind": "feature",
+      "title": "Stutter finder (record, then find the cause)",
+      "path": "docs/features/stutter-finder.md",
+      "summary": "Records what the PC does every second while you play, then names the program and often the file behind each stall.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "scripts/Record-Session.ps1",
+        "scripts/Find-Stutter-Cause.ps1",
+        "scripts/Enable-DiagnosticLogs.ps1",
+        "scripts/Repair-PerfCounters.ps1",
+        "scripts/Kit-Common.ps1",
+        "tests/test-locale.ps1"
+      ]
+    },
+    {
+      "id": "operations",
+      "kind": "operations",
+      "title": "Operations",
+      "path": "docs/operations.md",
+      "summary": "What you need, how to run it, how to run the tests, how a release is made, and the settings it reads.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "QuietWindows.bat",
+        "Optimize-My-PC.bat",
+        "scripts/Kit-Common.ps1",
+        "scripts/CPU-Profile.ps1",
+        "tests/",
+        "CHANGELOG.md"
+      ]
+    },
+    {
+      "id": "interfaces",
+      "kind": "interfaces",
+      "title": "Interfaces",
+      "path": "docs/interfaces.md",
+      "summary": "Every script's switches, the library functions other scripts call, the environment variables, and the files it writes for people.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "scripts/",
+        "extras/",
+        "QuietWindows-Menu.ps1",
+        "Optimize-My-PC.ps1"
+      ]
+    },
+    {
+      "id": "data",
+      "kind": "data",
+      "title": "Data and state",
+      "path": "docs/data.md",
+      "summary": "The small JSON and text files QuietWindows keeps, where they live, and which Windows settings it changes.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "scripts/Kit-Common.ps1",
+        "scripts/Start-Quiet.ps1",
+        "scripts/Stop-Quiet.ps1",
+        "scripts/CPU-Profile.ps1",
+        "scripts/Game-Library.ps1"
+      ]
+    },
+    {
+      "id": "glossary",
+      "kind": "glossary",
+      "title": "Glossary",
+      "path": "docs/GLOSSARY.md",
+      "summary": "The words QuietWindows uses for its own ideas, so code, docs and conversations mean the same thing.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "scripts/",
+        "README.md",
+        "HOW-TO.md",
+        "scripts/README.txt"
+      ]
+    },
+    {
+      "id": "known-issues",
+      "kind": "known-issues",
+      "title": "Known issues and open questions",
+      "path": "docs/known-issues.md",
+      "summary": "Doc and code mismatches, limits, small debts, and the questions the code could not answer.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "README.md",
+        "CLAUDE.md",
+        "CHANGELOG.md",
+        "scripts/Start-Quiet.ps1",
+        "scripts/Game-Library.ps1",
+        "tests/"
+      ]
+    },
+    {
+      "id": "adr-0001",
+      "kind": "adr",
+      "title": "ADR 0001: One shared quiet list in Kit-Common",
+      "path": "docs/adr/0001-one-shared-quiet-list.md",
+      "summary": "The services and tasks to quiet are declared once, in Kit-Common.ps1, and every script reads that list.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "scripts/Kit-Common.ps1",
+        "tests/test-kitcommon.ps1"
+      ]
+    },
+    {
+      "id": "adr-0002",
+      "kind": "adr",
+      "title": "ADR 0002: Disable services and restore from a snapshot",
+      "path": "docs/adr/0002-disable-services-and-replay-a-snapshot.md",
+      "summary": "Start-Quiet disables (not just stops) the quiet list and records the original state first; Stop-Quiet replays that record.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "scripts/Start-Quiet.ps1",
+        "scripts/Stop-Quiet.ps1",
+        "scripts/README.txt"
+      ]
+    },
+    {
+      "id": "adr-0003",
+      "kind": "adr",
+      "title": "ADR 0003: Fix scripts report their own failure",
+      "path": "docs/adr/0003-fix-scripts-report-their-own-failure.md",
+      "summary": "Every fix exits non-zero on a real failure and every elevation uses -ErrorAction Stop, so callers can tell success from failure.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "Optimize-My-PC.ps1",
+        "QuietWindows-Menu.ps1",
+        "scripts/Add-Defender-Exclusions.ps1",
+        "scripts/Apply-Extra-Tweaks.ps1",
+        "scripts/Enable-DiagnosticLogs.ps1",
+        "scripts/Enable-SmoothTimer.ps1",
+        "scripts/Set-GPU-IRQ-Affinity.ps1",
+        "scripts/Start-Quiet.ps1"
+      ]
+    },
+    {
+      "id": "adr-0004",
+      "kind": "adr",
+      "title": "ADR 0004: Detect the CPU most reliable first, and never guess",
+      "path": "docs/adr/0004-detect-the-cpu-most-reliable-first-and-never-guess.md",
+      "summary": "CPU-Profile uses the name catalog, then cache layout, then cache size, then core count, validates against Windows, and skips X3D-only steps when unsure.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "scripts/CPU-Profile.ps1",
+        "scripts/Set-GPU-IRQ-Affinity.ps1",
+        "scripts/Set-NIC-USB-IRQ-Affinity.ps1"
+      ]
+    },
+    {
+      "id": "adr-0005",
+      "kind": "adr",
+      "title": "ADR 0005: Menu layout in its own XAML file",
+      "path": "docs/adr/0005-menu-layout-in-its-own-xaml-file.md",
+      "summary": "The dashboard markup lives in ui/MainWindow.xaml instead of a here-string inside the menu script.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "QuietWindows-Menu.ps1",
+        "ui/MainWindow.xaml",
+        "tests/test-xaml.ps1"
+      ]
+    },
+    {
+      "id": "adr-0006",
+      "kind": "adr",
+      "title": "ADR 0006: Pause Defender real-time scanning during a quiet session",
+      "path": "docs/adr/0006-pause-defender-real-time-during-a-quiet-session.md",
+      "summary": "Start-Quiet pauses Defender real-time protection for the session and Stop-Quiet turns it back on; -SkipDefender leaves it alone.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "scripts/Start-Quiet.ps1",
+        "scripts/Stop-Quiet.ps1",
+        "README.md"
+      ]
+    },
+    {
+      "id": "how-to-add-an-extras-folder",
+      "kind": "how-to",
+      "title": "Add an Extras folder for a game",
+      "path": "docs/how-to/add-an-extras-folder.md",
+      "summary": "Give one game its own buttons without editing any QuietWindows file.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "extras/",
+        "QuietWindows-Menu.ps1"
+      ]
+    },
+    {
+      "id": "how-to-change-the-quiet-list",
+      "kind": "how-to",
+      "title": "Add or remove a quieted service or task",
+      "path": "docs/how-to/change-the-quiet-list.md",
+      "summary": "Change what Start-Quiet turns off, in the one place that controls it.",
+      "status": "current",
+      "updated": "2026-11-27",
+      "verified_commit": "51ef0b7",
+      "sources": [
+        "scripts/Kit-Common.ps1",
+        "tests/test-kitcommon.ps1"
+      ]
+    }
+  ],
+  "features": [
+    {
+      "id": "cpu-detection",
+      "title": "CPU detection",
+      "path": "docs/features/cpu-detection.md",
+      "summary": "Works out which AMD X3D chip (if any) the PC has, where its big cache is, and which cores are safe for interrupts; never guesses.",
+      "status": "current"
+    },
+    {
+      "id": "extras",
+      "title": "Extras (per-game fixes)",
+      "path": "docs/features/extras.md",
+      "summary": "Drop a folder into extras/ and each .ps1 in it becomes a button on the Extras page; iRacing ships as the first one.",
+      "status": "current"
+    },
+    {
+      "id": "game-library",
+      "title": "Games list (My Games)",
+      "path": "docs/features/game-library.md",
+      "summary": "One saved list of the games on this PC, found from store folders or added by hand, used for Defender exclusions and stutter hunting.",
+      "status": "current"
+    },
+    {
+      "id": "health-checks",
+      "title": "Checks and diagnostics",
+      "path": "docs/features/health-checks.md",
+      "summary": "Read-only tools that say whether setup took, whether you are quieted, what reverted, timer behaviour, and CPU undervolt stability.",
+      "status": "current"
+    },
+    {
+      "id": "interrupt-steering",
+      "title": "Interrupt steering (GPU, NIC and USB)",
+      "path": "docs/features/interrupt-steering.md",
+      "summary": "Moves graphics-card, network and USB interrupts off the game's cores using the Windows interrupt-affinity policy; reversible.",
+      "status": "current"
+    },
+    {
+      "id": "menu",
+      "title": "The dashboard (QuietWindows-Menu)",
+      "path": "docs/features/menu.md",
+      "summary": "A WPF window of plain-language buttons that runs every script in its own window, elevated only when needed.",
+      "status": "current"
+    },
+    {
+      "id": "one-time-setup",
+      "title": "One-time setup (the green button and Optimize-My-PC)",
+      "path": "docs/features/one-time-setup.md",
+      "summary": "Applies the lasting fixes once (Defender exclusions, USB and Game Bar, task log, smooth timer, GPU interrupts), then asks for a restart.",
+      "status": "current"
+    },
+    {
+      "id": "quiet-session",
+      "title": "Quiet session (Start-Quiet and Stop-Quiet)",
+      "path": "docs/features/quiet-session.md",
+      "summary": "Puts Windows Update, Search, Store updates and background jobs on hold for a game, then puts everything back from a snapshot.",
+      "status": "current"
+    },
+    {
+      "id": "stutter-finder",
+      "title": "Stutter finder (record, then find the cause)",
+      "path": "docs/features/stutter-finder.md",
+      "summary": "Records what the PC does every second while you play, then names the program and often the file behind each stall.",
+      "status": "current"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "0001",
+      "title": "ADR 0001: One shared quiet list in Kit-Common",
+      "status": "accepted",
+      "date": "2026-08-21",
+      "path": "docs/adr/0001-one-shared-quiet-list.md"
+    },
+    {
+      "id": "0002",
+      "title": "ADR 0002: Disable services and restore from a snapshot",
+      "status": "accepted",
+      "date": "2026-08-01",
+      "path": "docs/adr/0002-disable-services-and-replay-a-snapshot.md"
+    },
+    {
+      "id": "0003",
+      "title": "ADR 0003: Fix scripts report their own failure",
+      "status": "accepted",
+      "date": "2026-08-21",
+      "path": "docs/adr/0003-fix-scripts-report-their-own-failure.md"
+    },
+    {
+      "id": "0004",
+      "title": "ADR 0004: Detect the CPU most reliable first, and never guess",
+      "status": "accepted",
+      "date": "2026-08-01",
+      "path": "docs/adr/0004-detect-the-cpu-most-reliable-first-and-never-guess.md"
+    },
+    {
+      "id": "0005",
+      "title": "ADR 0005: Menu layout in its own XAML file",
+      "status": "accepted",
+      "date": "2026-09-04",
+      "path": "docs/adr/0005-menu-layout-in-its-own-xaml-file.md"
+    },
+    {
+      "id": "0006",
+      "title": "ADR 0006: Pause Defender real-time scanning during a quiet session",
+      "status": "accepted",
+      "date": "2026-11-27",
+      "path": "docs/adr/0006-pause-defender-real-time-during-a-quiet-session.md"
+    }
+  ],
+  "glossary": {
+    "path": "docs/GLOSSARY.md",
+    "terms": 30
+  },
+  "known_issues": {
+    "path": "docs/known-issues.md",
+    "open": 10,
+    "open_questions": 1
+  },
+  "health": {
+    "stale_docs": 0,
+    "missing_required": []
+  }
+}
