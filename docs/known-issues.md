@@ -35,5 +35,4 @@ None found.
 Answer any of these and the next run turns the answer into docs.
 
 1. Where does the v4.0.0 spec live, and should the docs point to it? Owner.
-2. Is the iRacing X3D Tuning Kit retired in favour of QuietWindows? Owner.
-3. Is `-NoSystem` meant for players, or a developer switch only? Owner.
+2. Is `-NoSystem` meant for players, or a developer switch only? Owner.

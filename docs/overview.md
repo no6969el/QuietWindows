@@ -29,7 +29,8 @@ includes a recorder that names what interrupted a game.
 ## Status
 
 Active. Latest release v1.0.4 (2026-09-04) on GitHub. Rebased from the iRacing X3D
-Tuning Kit, whose 3.x history is still quoted in script comments.
+Tuning Kit, whose 3.x history is still quoted in script comments. The Tuning Kit is
+still its own project, not retired; changes to it don't belong in this repo.
 
 ## Tech stack
 

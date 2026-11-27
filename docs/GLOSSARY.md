@@ -70,7 +70,7 @@ interrupt-affinity policy.
 **Kit**
 The whole QuietWindows folder. Scripts say "the kit" for historical reasons (it was
 rebased from the iRacing X3D Tuning Kit).
-_Avoid:_ tuning kit (the older, separate project)
+_Avoid:_ tuning kit (the iRacing X3D Tuning Kit, still a separate project of its own)
 
 **Medic unlock**
 Taking ownership of the Windows Update Medic service's registry key so its start type
