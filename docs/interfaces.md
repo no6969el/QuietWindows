@@ -16,7 +16,7 @@ the files people open.
 
 Inputs: `-Deadman`, `-Verify`, `-VerifyDelay <s>` (180), `-KeepSearch`,
 `-KeepTouchKeyboard`, `-KeepStore`, `-SkipDefender`, `-CloseApps`, `-NoUnlock`,
-`-NoSystem` (do not retry refused tasks as SYSTEM; not in the user docs), `-Force`.
+`-NoSystem` (do not retry refused tasks as SYSTEM; a player switch, in HOW-TO.md), `-Force`.
 Outputs: `state.json`, log lines, console report. Self-elevates.
 Errors: a missing `Kit-Common.ps1` stops the run; unstoppable services are reported.
 Called by: the menu (`BtnPreGame`), people by hand.

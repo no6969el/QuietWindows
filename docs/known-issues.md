@@ -16,7 +16,7 @@ This doc lists what is known to be wrong, limited or undecided.
 | Issue | Kind | Severity | Where |
 | --- | --- | --- | --- |
 | CHANGELOG.md 1.0.3 section and its lineage note show garbled dashes (`â€”`), UTF-8 read as Windows-1252 | debt | low | `CHANGELOG.md` |
-| `-NoSystem` switch is not in HOW-TO.md or scripts/README.txt | debt (docs) | low | `scripts/Start-Quiet.ps1` |
+| `-NoSystem` (a player switch) is in HOW-TO.md but not in scripts/README.txt | debt (docs) | low | `scripts/README.txt` |
 | README.md lists six stores; the scan also covers Battle.net and Riot | debt (docs) | low | `README.md`, `scripts/Game-Library.ps1` |
 | Banners differ: Game-Library says v1.0.0, Record-Session says v3, Test-UndervoltStability says v2, Kit-Common says 1.0.4 | debt | low | script headers |
 | No automated test for Start-Quiet, Stop-Quiet or any registry fix; they are tested by hand | limit | medium | `tests/` |
@@ -35,4 +35,3 @@ None found.
 Answer any of these and the next run turns the answer into docs.
 
 1. Where does the v4.0.0 spec live, and should the docs point to it? Owner.
-2. Is `-NoSystem` meant for players, or a developer switch only? Owner.

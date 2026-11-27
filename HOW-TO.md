@@ -136,6 +136,7 @@ Most people never need these. Run from the `scripts` folder:
 | `-NoUnlock` | Don't take ownership of the Windows Update Medic key |
 | `-KeepTouchKeyboard` | Leave the touch keyboard service alone (VR) |
 | `-KeepStore` | Leave Store auto-download policy alone |
+| `-NoSystem` | Don't retry as SYSTEM when Windows refuses to switch off a task; those tasks stay on |
 
 ```
 .\Start-Quiet.ps1 -Deadman
