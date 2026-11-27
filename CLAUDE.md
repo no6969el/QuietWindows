@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+@AGENTS.md
+
 ## No AI attribution (owner's rule)
 
 This repo is private until its owner publishes it, and credit for tools goes in the README at that point, never in the history or the documents.

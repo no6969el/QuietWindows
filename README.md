@@ -96,6 +96,10 @@ run at your own risk.
 
 ---
 
+Changing the scripts? Start with [docs/overview.md](docs/overview.md).
+
+---
+
 MIT licensed. Share it freely.
 
 Built on the stutter-hunting work of the sim-racing community.
