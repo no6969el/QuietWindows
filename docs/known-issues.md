@@ -21,6 +21,7 @@ This doc lists what is known to be wrong, limited or undecided.
 | Banners differ: Game-Library says v1.0.0, Record-Session says v3, Test-UndervoltStability says v2, Kit-Common says 1.0.4 | debt | low | script headers |
 | No automated test for Start-Quiet, Stop-Quiet or any registry fix; they are tested by hand | limit | medium | `tests/` |
 | No test runner or CI; tests are run one by one | limit | low | `tests/` |
+| Three tests set `APPDATA` to `/tmp/appdata`, a Linux-style path; on Windows it lands in `\tmp\appdata` on the current drive | debt | low | `tests/test-integration.ps1`, `tests/test-profiles.ps1`, `tests/bench-startup.ps1` |
 | Defender real-time cannot be paused while Tamper Protection is on | limit | low | `scripts/Start-Quiet.ps1` |
 | Interrupt masks cover cores 0 to 63 only (processor group 0) | limit | low | `scripts/Set-*-IRQ-Affinity.ps1` |
 | The menu's green button does not wait for its child, so it cannot report per-step failures | limit | low | `QuietWindows-Menu.ps1` |
@@ -34,8 +35,7 @@ None found.
 Answer any of these and the next run turns the answer into docs.
 
 1. Where does the v4.0.0 spec live, and should the docs point to it? Owner.
-2. How are the tests run in practice (pwsh on Windows, on Linux, or both)? Owner.
-3. What goes into a release: the GitHub source zip, or a hand-made zip? Should `docs/`,
+2. What goes into a release: the GitHub source zip, or a hand-made zip? Should `docs/`,
    `tests/`, `AGENTS.md` and `CLAUDE.md` ship to players? Owner.
-4. Is the iRacing X3D Tuning Kit retired in favour of QuietWindows? Owner.
-5. Is `-NoSystem` meant for players, or a developer switch only? Owner.
+3. Is the iRacing X3D Tuning Kit retired in favour of QuietWindows? Owner.
+4. Is `-NoSystem` meant for players, or a developer switch only? Owner.

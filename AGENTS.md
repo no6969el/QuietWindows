@@ -13,7 +13,7 @@ on hold while you game, then restore it. Start at [docs/overview.md](docs/overvi
 
 ## Code style and conventions
 
-- Target Windows PowerShell 5.1; tests run under PowerShell 7.
+- Target Windows PowerShell 5.1; tests run under PowerShell 7, on Windows only.
 - Shared lists and helpers live in `scripts/Kit-Common.ps1`; CPU answers in
   `scripts/CPU-Profile.ps1`; games in `scripts/Game-Library.ps1`. Dot-source them; never
   copy their lists or helpers into another script.

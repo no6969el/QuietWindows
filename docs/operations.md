@@ -20,8 +20,9 @@ This doc covers running, testing, releasing and configuring QuietWindows.
 - Optional: Process Lasso (X3D chips), Windows Performance Toolkit (xperf, for disk
   detail), MSI Afterburner and nvidia-smi (GPU sensors), LatencyMon (checking
   interrupt moves), PowerShell 7 (`pwsh`, for AVX-512 in the undervolt test).
-- For the tests: PowerShell 7 (`pwsh`). The tests use forward-slash paths and set
-  `APPDATA` to `/tmp/appdata`.
+- For the tests: PowerShell 7 (`pwsh`) on Windows. The tests are run on Windows only.
+  `test-integration.ps1`, `test-profiles.ps1` and `bench-startup.ps1` set `APPDATA`
+  to `/tmp/appdata`, which on Windows is `\tmp\appdata` on the current drive.
 
 ## Set up
 
@@ -42,8 +43,8 @@ powershell -ExecutionPolicy Bypass -File scripts\Start-Quiet.ps1 -Deadman
 
 ## Test and lint
 
-Each test is a standalone script that prints `ok` and `FAIL` lines and exits 1 on any
-failure. There is no runner and no CI.
+Run these on Windows, from the repo root. Each test is a standalone script that prints
+`ok` and `FAIL` lines and exits 1 on any failure. There is no runner and no CI.
 
 ```
 pwsh -File tests/test-kitcommon.ps1
