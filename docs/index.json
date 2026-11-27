@@ -14,8 +14,8 @@
     "repo": "github.com/no6969el/quietwindows"
   },
   "generated": {
-    "at": "2026-11-27T19:06:09Z",
-    "commit": "48ed4d6"
+    "at": "2026-11-27T19:08:00Z",
+    "commit": "4a53363"
   },
   "docs": [
     {
@@ -549,8 +549,8 @@
   },
   "known_issues": {
     "path": "docs/known-issues.md",
-    "open": 10,
-    "open_questions": 6
+    "open": 9,
+    "open_questions": 5
   },
   "health": {
     "stale_docs": 0,

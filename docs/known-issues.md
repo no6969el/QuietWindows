@@ -15,7 +15,6 @@ This doc lists what is known to be wrong, limited or undecided.
 
 | Issue | Kind | Severity | Where |
 | --- | --- | --- | --- |
-| CLAUDE.md says the repo is private until published; GitHub shows it public with five releases | debt (docs) | medium | `CLAUDE.md` |
 | CHANGELOG.md 1.0.3 section and its lineage note show garbled dashes (`â€”`), UTF-8 read as Windows-1252 | debt | low | `CHANGELOG.md` |
 | `-NoSystem` switch is not in HOW-TO.md or scripts/README.txt | debt (docs) | low | `scripts/Start-Quiet.ps1` |
 | README.md lists six stores; the scan also covers Battle.net and Riot | debt (docs) | low | `README.md`, `scripts/Game-Library.ps1` |
@@ -34,11 +33,9 @@ None found.
 
 Answer any of these and the next run turns the answer into docs.
 
-1. Is the repo public now, and should CLAUDE.md's "private until published" line
-   change? Owner.
-2. Where does the v4.0.0 spec live, and should the docs point to it? Owner.
-3. How are the tests run in practice (pwsh on Windows, on Linux, or both)? Owner.
-4. What goes into a release: the GitHub source zip, or a hand-made zip? Should `docs/`,
+1. Where does the v4.0.0 spec live, and should the docs point to it? Owner.
+2. How are the tests run in practice (pwsh on Windows, on Linux, or both)? Owner.
+3. What goes into a release: the GitHub source zip, or a hand-made zip? Should `docs/`,
    `tests/`, `AGENTS.md` and `CLAUDE.md` ship to players? Owner.
-5. Is the iRacing X3D Tuning Kit retired in favour of QuietWindows? Owner.
-6. Is `-NoSystem` meant for players, or a developer switch only? Owner.
+4. Is the iRacing X3D Tuning Kit retired in favour of QuietWindows? Owner.
+5. Is `-NoSystem` meant for players, or a developer switch only? Owner.
